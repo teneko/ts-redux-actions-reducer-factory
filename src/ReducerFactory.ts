@@ -1,5 +1,5 @@
 import { autoBind } from "@teronis/ts-auto-bind-es6";
-import { ReducerMap, ActionFunctions, Action, handleActions } from "redux-actions";
+import { ReducerMap, ActionFunctions, Action, handleActions, Reducer } from "redux-actions";
 import { Not, If, Or, And } from "typescript-logic";
 
 export type Extends<A, B> = [A] extends [B] ? true : false;
@@ -103,17 +103,32 @@ export type UnionPropsAndTypes<
     A, B,
     > = PreferPrimitivesOverProps<UnionProps<ExtractObjectExceptArray<A>, ExtractObjectExceptArray<B>>, UnionPrimitiveTypesAndArrays<A, B>>;
 
-export type PropsAndTypesExcept<A, B> = If<
+export type PropsAndTypesExcept<A, B> = PreferPrimitivesOverProps<If<
     And<HasExtractableObjectWithoutArray<A>, HasExtractableObjectWithoutArray<B>>,
     Pick<ExtractObjectExceptArray<A>, Exclude<AnyKeys<ExtractObjectExceptArray<A>>, AnyKeys<ExtractObjectExceptArray<B>>>>,
     ExtractObjectExceptArray<A>
-> | Exclude<ExcludeObjectExceptArray<A>, ExcludeObjectExceptArray<B>>;
+>, Exclude<ExcludeObjectExceptArray<A>, ExcludeObjectExceptArray<B>>>;
 
 type ActionTypeOrActionCreator<P> = ActionFunctions<P> | string;
 
-function as<T>(value: any): T {
-    return value;
-}
+type ReducedState<State, KnownState, IsKnownStateKnown> = If<
+    Extends<IsKnownStateKnown, null>,
+    PropsAndTypesExcept<State, KnownState>,
+    State
+>;
+
+type ExtendedUnknownState<
+    State,
+    KnownState,
+    IsKnownStateKnown,
+    UnknownState,
+    IsUnknownStateKnown,
+    _ReducedState extends ReducedState<State, KnownState, IsKnownStateKnown> = ReducedState<State, KnownState, IsKnownStateKnown>
+    > = If<
+        Extends<IsUnknownStateKnown, null>,
+        UnionPropsAndTypes<_ReducedState, UnknownState>,
+        _ReducedState
+    >
 
 type StateReturnType<State, KnownState, UnknownState> = ExcludeObject<State> | ExcludeObject<KnownState> | ExcludeObject<UnknownState> |
     (ExtractObject<State> & UnionPropsExcept<KnownState, State> & UnionPropsExcept<UnknownState, State>);
@@ -123,6 +138,33 @@ type FinalState<KnownState, UnknownState> = UnionPropsAndTypes<KnownState, Unkno
 type PartialReducerContextGetInitialKnownState<KnownState, UnknownState> = {
     getInitialKnownState: () => FinalState<KnownState, UnknownState>
 }
+
+type ReducerReducerFactory<
+    State,
+    Payload,
+    KnownState,
+    KnownStatePayload,
+    UnknownState,
+    UnknownStatePayload,
+    IsKnownStateKnown extends undefined | null,
+    IsUnknownStateKnown extends undefined | null
+    > = ReducerFactory<
+        If<
+            Extends<IsKnownStateKnown, null>,
+            UnionPropsAndTypesExcept<KnownState, State>,
+            KnownState
+        >,
+        KnownStatePayload,
+        ExtendedUnknownState<
+            State,
+            KnownState,
+            IsKnownStateKnown,
+            UnknownState,
+            IsUnknownStateKnown
+        >,
+        UnknownStatePayload | Payload,
+        IsKnownStateKnown,
+        null>;
 
 export class ReducerFactory<
     KnownState,
@@ -150,10 +192,7 @@ export class ReducerFactory<
     }
 
     private knownState?: KnownState;
-    private isKnownStateKnown?: IsKnownStateKnown;
     private knownReducerMap: ReducerMap<KnownState, KnownStatePayload>;
-    private unknownState?: UnknownState;
-    private isUnknownStateKnown?: IsUnknownStateKnown;
     private unknownReducerMap: ReducerMap<UnknownState, UnknownStatePayload>;
 
     protected constructor(options: {
@@ -166,43 +205,23 @@ export class ReducerFactory<
     } = {}) {
         autoBind(this);
         this.knownState = options.knownState;
-        this.isKnownStateKnown = options.isKnownStateKnown;
         this.knownReducerMap = options.knownReducerMap || {};
-        this.unknownState = options.unknownState;
-        this.isUnknownStateKnown = options.isUnknownStateKnown;
         this.unknownReducerMap = options.unknownReducerMap || {};
     }
 
-    private getReducedStateType<State>() {
-        return {} as If<
-            Extends<IsKnownStateKnown, null>,
-            PropsAndTypesExcept<State, KnownState>,
-            State
-        >;
-    }
+    public extendUnknownState<State>(): ReducerFactory<
+        KnownState,
+        KnownStatePayload,
+        ExtendedUnknownState<
+            State, KnownState, IsKnownStateKnown, UnknownState, IsUnknownStateKnown
+        >,
+        UnknownStatePayload,
+        IsKnownStateKnown,
+        null> {
 
-    private getUnknownStateType<State>() {
-        const ReducedStateDummy = this.getReducedStateType<State>();
-
-        return {} as If<
-            Extends<IsUnknownStateKnown, null>,
-            UnionPropsAndTypes<typeof ReducedStateDummy, UnknownState>,
-            typeof ReducedStateDummy
-        >;
-    };
-
-    public extendUnknownState<State>() {
-        const unknownState = this.getUnknownStateType<State>();
-
-        const unknownReducerMap = as<ReducerMap<typeof unknownState, UnknownStatePayload>>(this.unknownReducerMap);
-
-        return new ReducerFactory({
+        return <any>new ReducerFactory({
             knownState: this.knownState,
-            isKnownStateKnown: this.isKnownStateKnown,
             knownReducerMap: this.knownReducerMap,
-            unknownState,
-            unknownReducerMap,
-            isUnknownStateKnown: null,
         });
     }
 
@@ -216,52 +235,61 @@ export class ReducerFactory<
 
     public addReducer<State, Payload>(
         actionTypeOrActionCreator: ActionTypeOrActionCreator<Payload>,
-        reducer: (this: PartialReducerContextGetInitialKnownState<KnownState, UnknownState>, state: FinalState<KnownState, UnknownState>, action: Action<Payload>) => StateReturnType<State, KnownState, UnknownState>
-    ) {
+        reducer: (
+            this: PartialReducerContextGetInitialKnownState<KnownState, UnknownState>,
+            state: FinalState<KnownState, UnknownState>,
+            action: Action<Payload>) => StateReturnType<State, KnownState, UnknownState>): ReducerReducerFactory<
+                State,
+                Payload,
+                KnownState,
+                KnownStatePayload,
+                UnknownState,
+                UnknownStatePayload,
+                IsKnownStateKnown,
+                IsUnknownStateKnown> {
         reducer = reducer.bind({
             getInitialKnownState: this.getInitialKnownState
         });
 
-        const knownState: If<
-            Extends<IsKnownStateKnown, null>,
-            UnionPropsAndTypesExcept<KnownState, State>,
-            KnownState
-        > = <any>this.knownState;
+        const unknownReducerMap = <any>Object.assign(this.unknownReducerMap, { [actionTypeOrActionCreator.toString()]: reducer });
 
-        // @ts-ignore
-        let UnknownStatePayloadDummy: UnknownStatePayload | Payload;
-        const knownReducerMap: ReducerMap<typeof knownState, KnownStatePayload> = <any>this.knownReducerMap;
-        const unknownState = this.getUnknownStateType<State>();
-        const unknownReducerMap: ReducerMap<typeof unknownState, typeof UnknownStatePayloadDummy> = <any>Object.assign(this.unknownReducerMap, { [actionTypeOrActionCreator.toString()]: reducer });
-
-        return new ReducerFactory({
-            knownState,
-            isKnownStateKnown: this.isKnownStateKnown,
-            knownReducerMap,
-            unknownState,
-            isUnknownStateKnown: null,
+        return <any>new ReducerFactory({
+            knownState: this.knownState,
+            knownReducerMap: this.knownReducerMap,
             unknownReducerMap,
         });
     }
 
     public addPayloadReducer<Payload, State>(
         actionTypeOrActionCreator: ActionTypeOrActionCreator<Payload>,
-        defineNextState: (this: PartialReducerContextGetInitialKnownState<KnownState, UnknownState>, action: Action<Payload>) => StateReturnType<State, KnownState, UnknownState>
-    ) {
+        defineNextState: (this: PartialReducerContextGetInitialKnownState<KnownState, UnknownState>, action: Action<Payload>) => StateReturnType<State, KnownState, UnknownState>): ReducerReducerFactory<
+            State,
+            Payload,
+            KnownState,
+            KnownStatePayload,
+            UnknownState,
+            UnknownStatePayload,
+            IsKnownStateKnown,
+            IsUnknownStateKnown> {
         const reducer = (_state: UnionPropsAndTypes<KnownState, UnknownState>, action: Action<Payload>) => defineNextState.call({
             getInitialKnownState: this.getInitialKnownState
         }, action)
+
         return this.addReducer<State, Payload>(actionTypeOrActionCreator, reducer);
     }
 
-    public acceptUnknownState(unknownState: UnknownState) {
-        type _FinalState = FinalState<KnownState, UnknownState>;
-        const reducerMaps = <ReducerMap<_FinalState, KnownStatePayload | UnknownStatePayload>>Object.assign(this.unknownReducerMap, this.knownReducerMap);
-        const knownState = <_FinalState>Object.assign(unknownState, this.knownState);
+    public acceptUnknownState(unknownState: UnknownState): ReducerFactory<
+        FinalState<KnownState, UnknownState>,
+        KnownStatePayload | UnknownStatePayload,
+        {},
+        {},
+        null,
+        undefined> {
+        const knownState = Object.assign(this.knownState, unknownState);
+        const reducerMaps = Object.assign(this.knownReducerMap, this.unknownReducerMap);
 
-        return new ReducerFactory({
+        return <any>new ReducerFactory({
             knownState,
-            isKnownStateKnown: null,
             knownReducerMap: reducerMaps,
         });
     }
@@ -270,14 +298,16 @@ export class ReducerFactory<
         return handleActions(this.knownReducerMap, <KnownState>this.knownState);
     }
 
-    public toReducer(unknownState: UnknownState) {
-        return this.acceptUnknownState(unknownState)
+    public toReducer(unknownState: UnknownState): Reducer<
+        FinalState<KnownState, UnknownState>,
+        KnownStatePayload | UnknownStatePayload> {
+        return <any>this.acceptUnknownState(unknownState)
             .handleActions();
     }
 }
 
 export type CombinableReducer<R> = R extends (state: infer S, action: infer A) => any ? (state: S | undefined, action: A) => S : never;
 
-export function asCombinableReducer<S, A>(reducer: (state: S, action: A) => S){
-    return  <CombinableReducer<typeof reducer>>reducer;
+export function asCombinableReducer<S, A>(reducer: (state: S, action: A) => S) {
+    return <CombinableReducer<typeof reducer>>reducer;
 }
