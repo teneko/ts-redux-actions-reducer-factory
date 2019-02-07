@@ -139,6 +139,12 @@ type PartialReducerContextGetInitialKnownState<KnownState, UnknownState> = {
     getInitialKnownState: () => FinalState<KnownState, UnknownState>
 }
 
+export type CombinableReducer<Reducer> = Reducer extends (state: infer S, action: infer A) => any ? (state: S | undefined, action: A) => S : never;
+
+export function asCombinableReducer<S, A>(reducer: (state: S, action: A) => S) {
+    return <CombinableReducer<typeof reducer>>reducer;
+}
+
 type ReducerReducerFactory<
     State,
     Payload,
@@ -278,6 +284,7 @@ export class ReducerFactory<
         return this.addReducer<State, Payload>(actionTypeOrActionCreator, reducer);
     }
 
+    /** */
     public acceptUnknownState(unknownState: UnknownState): ReducerFactory<
         FinalState<KnownState, UnknownState>,
         KnownStatePayload | UnknownStatePayload,
@@ -285,7 +292,16 @@ export class ReducerFactory<
         {},
         null,
         undefined> {
-        const knownState = Object.assign(this.knownState, unknownState);
+        let knownState;
+
+        // As typeof unknownState === "object" results in true, if it is equals null, we ask for it
+        if (typeof unknownState === "object" && unknownState !== null && !Array.isArray(unknownState)) {
+            // As we do not know, if knownState is initialized, we have to assign into unknownState
+            knownState = Object.assign(unknownState, this.knownState);
+        } else {
+            knownState = unknownState;
+        }
+
         const reducerMaps = Object.assign(this.knownReducerMap, this.unknownReducerMap);
 
         return <any>new ReducerFactory({
@@ -295,19 +311,13 @@ export class ReducerFactory<
     }
 
     private handleActions() {
-        return handleActions(this.knownReducerMap, <KnownState>this.knownState);
+        return handleActions<KnownState, KnownStatePayload>(this.knownReducerMap, this.knownState!);
     }
 
-    public toReducer(unknownState: UnknownState): Reducer<
+    public toReducer(unknownState: UnknownState): CombinableReducer<Reducer<
         FinalState<KnownState, UnknownState>,
-        KnownStatePayload | UnknownStatePayload> {
+        KnownStatePayload | UnknownStatePayload>> {
         return <any>this.acceptUnknownState(unknownState)
             .handleActions();
     }
-}
-
-export type CombinableReducer<R> = R extends (state: infer S, action: infer A) => any ? (state: S | undefined, action: A) => S : never;
-
-export function asCombinableReducer<S, A>(reducer: (state: S, action: A) => S) {
-    return <CombinableReducer<typeof reducer>>reducer;
 }
