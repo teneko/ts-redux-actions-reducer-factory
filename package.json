@@ -1,5 +1,5 @@
 {
-  "name": "@teronis/ts-redux-actions-reducer-factory",
+  "name": "ts-redux-actions-reducer-factory",
   "version": "0.0.0",
   "description": "A reducer factory that infers contextual types for lesser boilerplate.",
   "main": "dist/teronis-ts-redux-actions-reducer-factory.js",
