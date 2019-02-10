@@ -172,6 +172,97 @@ type ReducerReducerFactory<
         IsKnownStateKnown,
         null>;
 
+
+
+
+export type ReducerFactoryContainer<
+    KnownState,
+    KnownStatePayload,
+    UnknownState,
+    UnknownStatePayload
+    > = {
+        knownState?: KnownState;
+        knownReducerMap: ReducerMap<KnownState, KnownStatePayload>;
+        unknownReducerMap: ReducerMap<UnknownState, UnknownStatePayload>;
+    }
+
+type ReducerReducerFactoryContainer<
+    State,
+    Payload,
+    KnownState,
+    KnownStatePayload,
+    UnknownState,
+    UnknownStatePayload,
+    IsKnownStateKnown extends undefined | null,
+    IsUnknownStateKnown extends undefined | null
+    > = ReducerFactoryContainer<
+        If<
+            Extends<IsKnownStateKnown, null>,
+            UnionPropsAndTypesExcept<KnownState, State>,
+            KnownState
+        >,
+        KnownStatePayload,
+        ExtendedUnknownState<
+            State,
+            KnownState,
+            IsKnownStateKnown,
+            UnknownState,
+            IsUnknownStateKnown
+        >,
+        UnknownStatePayload | Payload>;
+
+export class ReducerFactoryBox<
+    KnownState,
+    KnownStatePayload,
+    UnknownState,
+    UnknownStatePayload,
+    IsKnownStateKnown extends undefined | null = undefined,
+    IsUnknownStateKnown extends undefined | null = undefined
+    > {
+    options: ReducerFactoryContainer<
+        KnownState,
+        KnownStatePayload,
+        UnknownState,
+        UnknownStatePayload
+    >;
+
+    protected constructor(options: ReducerFactoryContainer<
+        KnownState,
+        KnownStatePayload,
+        UnknownState,
+        UnknownStatePayload
+    >) {
+        autoBind(this);
+        this.options = options;
+    }
+
+    public addReducer<State, Payload>(
+        actionTypeOrActionCreator: ActionTypeOrActionCreator<Payload>,
+        reducer: (
+            this: PartialReducerContextGetInitialKnownState<KnownState, UnknownState>,
+            state: FinalState<KnownState, UnknownState>,
+            action: Action<Payload>) => StateReturnType<State, KnownState, UnknownState>
+    ): ReducerReducerFactoryContainer<
+        State,
+        Payload,
+        KnownState,
+        KnownStatePayload,
+        UnknownState,
+        UnknownStatePayload,
+        IsKnownStateKnown,
+        IsUnknownStateKnown
+    > {
+
+        const unknownReducerMap = <any>Object.assign(this.options.unknownReducerMap, { [actionTypeOrActionCreator.toString()]: reducer });
+
+        return <any>({
+            knownState: this.options.knownState,
+            knownReducerMap: this.options.knownReducerMap,
+            unknownReducerMap,
+        });
+    }
+}
+
 export class ReducerFactory<
     KnownState,
     KnownStatePayload,
@@ -185,10 +276,9 @@ export class ReducerFactory<
     }
 
     static createWithKnownState<KnownState>(knownState: KnownState) {
-        return new ReducerFactory({
-            knownState,
-            isKnownStateKnown: null
-        });
+        return ReducerFactory
+            .create()
+            .acceptUnknownState(knownState);
     }
 
     static createWithUnknownState<UnknownState>() {
@@ -203,10 +293,7 @@ export class ReducerFactory<
 
     protected constructor(options: {
         knownState?: KnownState;
-        isKnownStateKnown?: IsKnownStateKnown;
         knownReducerMap?: ReducerMap<KnownState, KnownStatePayload>;
-        unknownState?: UnknownState;
-        isUnknownStateKnown?: IsUnknownStateKnown;
         unknownReducerMap?: ReducerMap<UnknownState, UnknownStatePayload>;
     } = {}) {
         autoBind(this);
@@ -223,8 +310,8 @@ export class ReducerFactory<
         >,
         UnknownStatePayload,
         IsKnownStateKnown,
-        null> {
-
+        null
+    > {
         return <any>new ReducerFactory({
             knownState: this.knownState,
             knownReducerMap: this.knownReducerMap,
@@ -239,20 +326,39 @@ export class ReducerFactory<
         return <any>this.knownState!;
     }
 
+    // public watchItself<T>(callback: (self:
+    //     ReducerFactory<
+    //         KnownState,
+    //         KnownStatePayload,
+    //         UnknownState,
+    //         UnknownStatePayload,
+    //         IsKnownStateKnown,
+    //         IsUnknownStateKnown>) => T): T {
+    //     return <any>callback(<any>this);
+    // }
+
     public addReducer<State, Payload>(
         actionTypeOrActionCreator: ActionTypeOrActionCreator<Payload>,
         reducer: (
             this: PartialReducerContextGetInitialKnownState<KnownState, UnknownState>,
             state: FinalState<KnownState, UnknownState>,
-            action: Action<Payload>) => StateReturnType<State, KnownState, UnknownState>): ReducerReducerFactory<
+            action: Action<Payload>) => StateReturnType<
                 State,
-                Payload,
                 KnownState,
-                KnownStatePayload,
-                UnknownState,
-                UnknownStatePayload,
-                IsKnownStateKnown,
-                IsUnknownStateKnown> {
+                UnknownState
+            >
+    )
+    : ReducerReducerFactory<
+        State,
+        Payload,
+        KnownState,
+        KnownStatePayload,
+        UnknownState,
+        UnknownStatePayload,
+        IsKnownStateKnown,
+        IsUnknownStateKnown
+    > 
+    {
         reducer = reducer.bind({
             getInitialKnownState: this.getInitialKnownState
         });
@@ -268,16 +374,18 @@ export class ReducerFactory<
 
     public addPayloadReducer<Payload, State>(
         actionTypeOrActionCreator: ActionTypeOrActionCreator<Payload>,
-        defineNextState: (this: PartialReducerContextGetInitialKnownState<KnownState, UnknownState>, action: Action<Payload>) => StateReturnType<State, KnownState, UnknownState>): ReducerReducerFactory<
-            State,
-            Payload,
-            KnownState,
-            KnownStatePayload,
-            UnknownState,
-            UnknownStatePayload,
-            IsKnownStateKnown,
-            IsUnknownStateKnown> {
-        const reducer = (_state: UnionPropsAndTypes<KnownState, UnknownState>, action: Action<Payload>) => defineNextState.call({
+        actionReducer: (this: PartialReducerContextGetInitialKnownState<KnownState, UnknownState>, action: Action<Payload>) =>
+            StateReturnType<State, KnownState, UnknownState>): ReducerReducerFactory<
+                State,
+                Payload,
+                KnownState,
+                KnownStatePayload,
+                UnknownState,
+                UnknownStatePayload,
+                IsKnownStateKnown,
+                IsUnknownStateKnown
+            > {
+        const reducer = (_state: UnionPropsAndTypes<KnownState, UnknownState>, action: Action<Payload>) => actionReducer.call({
             getInitialKnownState: this.getInitialKnownState
         }, action)
 
@@ -291,7 +399,8 @@ export class ReducerFactory<
         {},
         {},
         null,
-        undefined> {
+        undefined
+    > {
         let knownState;
 
         // As typeof unknownState === "object" results in true, if it is equals null, we ask for it
@@ -314,10 +423,39 @@ export class ReducerFactory<
         return handleActions<KnownState, KnownStatePayload>(this.knownReducerMap, this.knownState!);
     }
 
-    public toReducer(unknownState: UnknownState): CombinableReducer<Reducer<
-        FinalState<KnownState, UnknownState>,
-        KnownStatePayload | UnknownStatePayload>> {
+    public toReducer(unknownState: UnknownState): CombinableReducer<
+        Reducer<
+            FinalState<KnownState, UnknownState>,
+            KnownStatePayload | UnknownStatePayload
+        >
+    > {
         return <any>this.acceptUnknownState(unknownState)
             .handleActions();
     }
 }
+
+// export class ReducerFactorySelfWatcher<
+//     KnownState,
+//     KnownStatePayload,
+//     UnknownState,
+//     UnknownStatePayload,
+//     IsKnownStateKnown extends undefined | null,
+//     IsUnknownStateKnown extends undefined | null
+//     > {
+//     private factory: any;
+
+//     public constructor(factory: any) {
+//         this.factory = factory;
+//     }
+
+//     public watchItself<T>(callback: (self: ReducerFactory<
+//         KnownState,
+//         KnownStatePayload,
+//         UnknownState,
+//         UnknownStatePayload,
+//         IsKnownStateKnown,
+//         IsUnknownStateKnown
+//     >) => T): T {
+//         return callback(<any>this.factory);
+//     }
+// }
