@@ -1,41 +1,34 @@
 import { autoBind } from "@teronis/ts-auto-bind-es6";
 import { ReducerMap, ActionFunctions, Action, handleActions, Reducer } from "redux-actions";
 import { Not, If, Or, And } from "typescript-logic";
+import { Extends, AnyKeys, ExtractObject, ExtractObjectExceptArray, ExcludeObjectExceptArray, ExcludeObject } from "@teronis/ts-definitions";
 
-export type Extends<A, B> = [A] extends [B] ? true : false;
-export type ExtractObject<A> = Extract<A, object>;
-export type ExtractObjectExceptArray<A> = Exclude<ExtractObject<A>, any[]>;
-export type ExcludeObject<A> = Exclude<A, object>;
-export type ExtractArray<A, TArray extends any[]= any[]> = Extract<A, TArray>;
-export type ExcludeObjectExceptArray<A> = ExtractArray<A> | Exclude<A, object>;
-export type AnyKeys<T> = T extends any ? keyof T : never;
-
-export type IfNotNever2<A, B> = If<
+type IfNotNever2<A, B> = If<
     Not<Extends<A, never>>,
     A,
     B
 >
 
-export type IfNotNever3<N, A, B> = If<
+type IfNotNever3<N, A, B> = If<
     Not<Extends<N, never>>,
     A,
     B
 >
 
 /** Intersect only those types that are related to the same property key of object A and B. This function is only applicable on object types. */
-export type IntersectProps<
+type IntersectProps<
     A,
     B,
     MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>
     > = { [K in MutualKeys extends AnyKeys<A> & AnyKeys<B> ? MutualKeys : never]: A[K] | B[K] };
 
 /** Does A have any object in his union? Returns type of true or false. */
-export type HasExtractableObject<A> = Not<Extends<ExtractObject<A>, never>>;
+type HasExtractableObject<A> = Not<Extends<ExtractObject<A>, never>>;
 
-export type HasExtractableObjectWithoutArray<A> = Not<Extends<ExtractObjectExceptArray<A>, never>>;
+type HasExtractableObjectWithoutArray<A> = Not<Extends<ExtractObjectExceptArray<A>, never>>;
 
 /** Creates an union of any extractable objects. */
-export type UnionExtractableObjects<A, B> = If<
+type UnionExtractableObjects<A, B> = If<
     // If A or B has object ..
     Or<HasExtractableObject<A>, HasExtractableObject<B>>,
     // .. then return the one or the other object
@@ -44,8 +37,8 @@ export type UnionExtractableObjects<A, B> = If<
     {}
 >;
 
-/** Combines only those types that are related to the same property key of object A and B and include the remaining keys of object A. This function is only applicable on object types. */
-export type UnionPropsExcept<
+/** Combines only those types that are related to the same property key of object A and B and include the remaining keys of object A. */
+type UnionPropsExcept<
     A,
     B,
     MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
@@ -53,8 +46,8 @@ export type UnionPropsExcept<
     // > = TakeoverProps<IntersectProps<A, B, MutualKeys>, A, LeftKeys>
     > = IntersectProps<A, B, MutualKeys> & Pick<A, LeftKeys>
 
-/** Combines only those types that are related to the same property key of object A and B and include the remaining keys of object A and B. This function is only applicable on object types. */
-export type UnionProps<
+/** Combines only those types that are related to the same property key of object A and B and include the remaining keys of object A and B. */
+type UnionProps<
     A,
     B,
     MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
@@ -64,46 +57,46 @@ export type UnionProps<
     > = UnionPropsExcept<A, B, MutualKeys, LeftKeys> & Pick<B, RightKeys>;
 
 /** Intersect only the primitive types of Object A and Object B. */
-export type IntersectPrimitiveTypes<A, B> = Exclude<A | B, Exclude<A, B> | Exclude<B, A> | object>;
+type IntersectPrimitiveTypes<A, B> = Exclude<A | B, Exclude<A, B> | Exclude<B, A> | object>;
 
-export type IntersectPrimitiveTypesAndArrays<
+type IntersectPrimitiveTypesAndArrays<
     A, B,
     A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
     B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>,
     > = ExcludeObjectExceptArray<Exclude<A2 | B2, Exclude<A2, B2> | Exclude<B2, A2>>>;
 
-export type UnionPrimitiveTypesExcept<A, B> = Exclude<A | B, Exclude<B, A> | object>;
+type UnionPrimitiveTypesExcept<A, B> = Exclude<A | B, Exclude<B, A> | object>;
 
-export type UnionPrimitiveTypesAndArraysExcept<
+type UnionPrimitiveTypesAndArraysExcept<
     A, B,
     A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
     B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>
     > = Exclude<A2 | B2, Exclude<B2, A2>>;
 
 /** Create an union of the primitive types of Object A and Object B. */
-export type UnionPrimitiveTypes<A, B> = ExcludeObject<A | B>;
+type UnionPrimitiveTypes<A, B> = ExcludeObject<A | B>;
 
-export type UnionPrimitiveTypesAndArrays<A, B> = ExcludeObjectExceptArray<A | B>;
+type UnionPrimitiveTypesAndArrays<A, B> = ExcludeObjectExceptArray<A | B>;
 
-export type PreferPrimitivesOverProps<Props, Primitives> = If<
+type PreferPrimitivesOverProps<Props, Primitives> = If<
     And<Not<Extends<Primitives, never>>, And<Extends<Props, {}>, Extends<{}, Props>>>,
     Primitives,
     Props | Primitives
 >;
 
-export type IntersectPropsAndTypes<
+type IntersectPropsAndTypes<
     A, B,
     > = PreferPrimitivesOverProps<IntersectProps<ExtractObjectExceptArray<A>, ExtractObjectExceptArray<B>>, IntersectPrimitiveTypesAndArrays<A, B>>;
 
-export type UnionPropsAndTypesExcept<
+type UnionPropsAndTypesExcept<
     A, B,
     > = PreferPrimitivesOverProps<UnionPropsExcept<ExtractObjectExceptArray<A>, ExtractObjectExceptArray<B>>, UnionPrimitiveTypesAndArraysExcept<A, B>>;
 
-export type UnionPropsAndTypes<
+type UnionPropsAndTypes<
     A, B,
     > = PreferPrimitivesOverProps<UnionProps<ExtractObjectExceptArray<A>, ExtractObjectExceptArray<B>>, UnionPrimitiveTypesAndArrays<A, B>>;
 
-export type PropsAndTypesExcept<A, B> = PreferPrimitivesOverProps<If<
+type PropsAndTypesExcept<A, B> = PreferPrimitivesOverProps<If<
     And<HasExtractableObjectWithoutArray<A>, HasExtractableObjectWithoutArray<B>>,
     Pick<ExtractObjectExceptArray<A>, Exclude<AnyKeys<ExtractObjectExceptArray<A>>, AnyKeys<ExtractObjectExceptArray<B>>>>,
     ExtractObjectExceptArray<A>
@@ -139,8 +132,9 @@ type PartialReducerContextGetInitialKnownState<KnownState, UnknownState> = {
     getInitialKnownState: () => FinalState<KnownState, UnknownState>
 }
 
-export type CombinableReducer<Reducer> = Reducer extends (state: infer S, action: infer A) => any ? (state: S | undefined, action: A) => S : never;
+export type CombinableReducer<InvalidReduxReducer> = InvalidReduxReducer extends (state: infer S, action: infer A) => any ? (state: S | undefined, action: A) => S : never;
 
+/** An utility function, that makes a reducer type defintion for `combineReducers` (@redux) valid by adding `undefined` to the state type definition. */
 export function asCombinableReducer<S, A>(reducer: (state: S, action: A) => S) {
     return <CombinableReducer<typeof reducer>>reducer;
 }
@@ -150,7 +144,7 @@ export type ReducerFactoryOptions<
     KnownStatePayload,
     UnknownState,
     UnknownStatePayload,
-    /* They are needed */
+    /* They are needed for inference purposes */
     IsKnownStateKnown extends undefined | null,
     IsUnknownStateKnown extends undefined | null,
     > = {
@@ -186,7 +180,7 @@ type ReducerReducerFactoryOptions<
         IsKnownStateKnown,
         null>;
 
-export class ReducerFactoryContainer<
+export class ReducerFactoryBase<
     KnownState,
     KnownStatePayload,
     UnknownState,
@@ -212,7 +206,12 @@ export class ReducerFactoryContainer<
         IsUnknownStateKnown
     >) {
         autoBind(this, "getInitialKnownState");
-        this.options = options;
+
+        this.options = {
+            knownState: options.knownState,
+            knownReducerMap: options.knownReducerMap || {},
+            unknownReducerMap: options.unknownReducerMap || {}
+        };
     }
 
     /** Get the initial known state you build up with `acceptUnknownState` and `toReducer`. */
@@ -228,7 +227,7 @@ export class ReducerFactoryBox<
     UnknownStatePayload,
     IsKnownStateKnown extends undefined | null = undefined,
     IsUnknownStateKnown extends undefined | null = undefined
-    > extends ReducerFactoryContainer<
+    > extends ReducerFactoryBase<
     KnownState,
     KnownStatePayload,
     UnknownState,
@@ -236,7 +235,7 @@ export class ReducerFactoryBox<
     IsKnownStateKnown,
     IsUnknownStateKnown
     > {
-    public constructor(container: ReducerFactoryContainer<
+    public constructor(base: ReducerFactoryBase<
         KnownState,
         KnownStatePayload,
         UnknownState,
@@ -244,8 +243,8 @@ export class ReducerFactoryBox<
         IsKnownStateKnown,
         IsUnknownStateKnown
     >) {
-        // @ts-ignore Intended access..
-        super(container.options);
+        // @ts-ignore Intended access.. (There is currently no "internal"-modifier)
+        super(base.options);
     }
 
     public addReducer<State, Payload>(
@@ -332,7 +331,7 @@ export class ReducerFactory<
     UnknownStatePayload,
     IsKnownStateKnown extends undefined | null = undefined,
     IsUnknownStateKnown extends undefined | null = undefined
-    > extends ReducerFactoryContainer<
+    > extends ReducerFactoryBase<
     KnownState,
     KnownStatePayload,
     UnknownState,
@@ -347,7 +346,7 @@ export class ReducerFactory<
     static createWithKnownState<KnownState>(knownState: KnownState) {
         return ReducerFactory
             .create()
-            .acceptUnknownState(knownState);
+            .acceptUnknownState<KnownState>(knownState);
     }
 
     static createWithUnknownState<UnknownState>() {
@@ -385,6 +384,11 @@ export class ReducerFactory<
         });
     }
 
+    /** 
+     * You will be able to have access to the boxed version of "this". This is an alternative to have access to "this" over the context of a function. 
+     * So, it makes only sense to prefer this method over a "this"-context-function when you need an arrow function.
+     * Because this method makes heavy use of inference, the perfomance is much decreased.
+     */
     public watchItself<
         _KnownState,
         _knownStatePayload,
@@ -415,7 +419,7 @@ export class ReducerFactory<
         _UnknownStatePayload,
         _IsKnownStateKnown,
         _IsUnknownStateKnown> {
-        return <any>callback(<any>new ReducerFactoryBox(this));
+        return <any>new ReducerFactory(callback(new ReducerFactoryBox(this)));
     }
 
     public addReducer<State, Payload>(
@@ -457,9 +461,8 @@ export class ReducerFactory<
         return <any>new ReducerFactory(new ReducerFactoryBox(this).addPayloadReducer(actionTypeOrActionCreator, actionReducer));
     }
 
-    /** */
-    public acceptUnknownState(unknownState: UnknownState): ReducerFactory<
-        FinalState<KnownState, UnknownState>,
+    private acceptUnknownState<_UnknownState extends UnknownState>(unknownState: _UnknownState): ReducerFactory<
+        FinalState<KnownState, _UnknownState>,
         KnownStatePayload | UnknownStatePayload,
         {},
         {},
@@ -488,13 +491,22 @@ export class ReducerFactory<
         return handleActions<KnownState, KnownStatePayload>(this.options.knownReducerMap, this.options.knownState!);
     }
 
-    public toReducer(unknownState: UnknownState): CombinableReducer<
+    public toReducer(unknownState: UnknownState):
+        Reducer<
+            FinalState<KnownState, UnknownState>,
+            KnownStatePayload | UnknownStatePayload
+        > {
+        return <any>this.acceptUnknownState(unknownState)
+            .handleActions();
+    }
+
+    /** Returns a reducer that is compatible to `combineReducers` (@redux). */
+    public toCombinableReducer(unknownState: UnknownState): CombinableReducer<
         Reducer<
             FinalState<KnownState, UnknownState>,
             KnownStatePayload | UnknownStatePayload
         >
     > {
-        return <any>this.acceptUnknownState(unknownState)
-            .handleActions();
+        return <any>this.toReducer(unknownState);
     }
 }

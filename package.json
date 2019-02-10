@@ -2,20 +2,19 @@
   "name": "ts-redux-actions-reducer-factory",
   "version": "0.0.0",
   "description": "A reducer factory that infers contextual types for lesser boilerplate.",
-  "main": "dist/teronis-ts-redux-actions-reducer-factory.js",
+  "main": "dist/ts-redux-actions-reducer-factory.js",
   "source": "src/index.ts",
-  "types": "dist/teronis-ts-redux-actions-reducer-factory.d.ts",
+  "types": "dist/ts-redux-actions-reducer-factory.d.ts",
   "scripts": {
     "prepublishOnly": "npm run build",
-    "build": "webpack || true",
+    "build": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/teroneko/teronis-ts-redux-actions-reducer-factory.git"
+    "url": "git+https://github.com/teroneko/ts-redux-actions-reducer-factory.git"
   },
   "keywords": [
-    "teronis",
     "typescript",
     "ts",
     "redux-actions",
@@ -26,17 +25,17 @@
     "factory"
   ],
   "author": "teroneko",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/teroneko/teronis-ts-redux-actions-reducer-factory/issues"
+    "url": "https://github.com/teroneko/ts-redux-actions-reducer-factory/issues"
   },
-  "homepage": "https://github.com/teroneko/teronis-ts-redux-actions-reducer-factory#readme",
+  "homepage": "https://github.com/teroneko/ts-redux-actions-reducer-factory#readme",
   "devDependencies": {
     "@babel/core": "^7.2.2",
     "@babel/preset-env": "^7.2.3",
     "@babel/preset-typescript": "^7.1.0",
     "@teronis/ts-auto-bind-es6": "~0.0.1",
-    "@teronis/ts-definitions": "~0.7.1",
+    "@teronis/ts-definitions": "^0.7.2",
     "@types/redux-actions": "^2.3.1",
     "awesome-typescript-loader": "^5.2.1",
     "babel-loader": "^8.0.5",
@@ -58,5 +57,9 @@
   },
   "peerDependencies": {
     "redux-actions": "^2.6.4"
-  }
+  },
+  "files": [
+    "dist",
+    "src"
+  ]
 }
