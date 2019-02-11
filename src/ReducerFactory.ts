@@ -7,13 +7,13 @@ type IfNotNever2<A, B> = If<
     Not<Extends<A, never>>,
     A,
     B
->
+>;
 
 type IfNotNever3<N, A, B> = If<
     Not<Extends<N, never>>,
     A,
     B
->
+>;
 
 /** Intersect only those types that are related to the same property key of object A and B. This function is only applicable on object types. */
 type IntersectProps<
@@ -44,7 +44,7 @@ type UnionPropsExcept<
     MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
     LeftKeys extends IfNotNever3<MutualKeys, Exclude<AnyKeys<A>, MutualKeys>, AnyKeys<A>> = IfNotNever3<MutualKeys, Exclude<AnyKeys<A>, MutualKeys>, AnyKeys<A>>,
     // > = TakeoverProps<IntersectProps<A, B, MutualKeys>, A, LeftKeys>
-    > = IntersectProps<A, B, MutualKeys> & Pick<A, LeftKeys>
+    > = IntersectProps<A, B, MutualKeys> & Pick<A, LeftKeys>;
 
 /** Combines only those types that are related to the same property key of object A and B and include the remaining keys of object A and B. */
 type UnionProps<
@@ -121,16 +121,16 @@ type ExtendedUnknownState<
         Extends<IsUnknownStateKnown, null>,
         UnionPropsAndTypes<_ReducedState, UnknownState>,
         _ReducedState
-    >
+    >;
 
 type StateReturnType<State, KnownState, UnknownState> = ExcludeObject<State> | ExcludeObject<KnownState> | ExcludeObject<UnknownState> |
     (ExtractObject<State> & UnionPropsExcept<KnownState, State> & UnionPropsExcept<UnknownState, State>);
 
-type FinalState<KnownState, UnknownState> = UnionPropsAndTypes<KnownState, UnknownState>
+type FinalState<KnownState, UnknownState> = UnionPropsAndTypes<KnownState, UnknownState>;
 
-type PartialReducerContextGetInitialKnownState<KnownState, UnknownState> = {
-    getInitialKnownState: () => FinalState<KnownState, UnknownState>
-}
+type PartialReducerContext<KnownState, UnknownState> = {
+    initialKnownState: FinalState<KnownState, UnknownState>
+};
 
 export type CombinableReducer<InvalidReduxReducer> = InvalidReduxReducer extends (state: infer S, action: infer A) => any ? (state: S | undefined, action: A) => S : never;
 
@@ -151,7 +151,7 @@ export type ReducerFactoryOptions<
         knownState?: KnownState;
         knownReducerMap: ReducerMap<KnownState, KnownStatePayload>;
         unknownReducerMap: ReducerMap<UnknownState, UnknownStatePayload>;
-    }
+    };
 
 type ReducerReducerFactoryOptions<
     State,
@@ -195,7 +195,7 @@ export class ReducerFactoryBase<
         UnknownStatePayload,
         IsKnownStateKnown,
         IsUnknownStateKnown
-    >
+    >;
 
     public constructor(options: ReducerFactoryOptions<
         KnownState,
@@ -205,8 +205,6 @@ export class ReducerFactoryBase<
         IsKnownStateKnown,
         IsUnknownStateKnown
     >) {
-        autoBind(this, "getInitialKnownState");
-
         this.options = {
             knownState: options.knownState,
             knownReducerMap: options.knownReducerMap || {},
@@ -215,7 +213,7 @@ export class ReducerFactoryBase<
     }
 
     /** Get the initial known state you build up with `acceptUnknownState` and `toReducer`. */
-    public getInitialKnownState(): UnionPropsAndTypes<KnownState, UnknownState> {
+    public get initialKnownState(): UnionPropsAndTypes<KnownState, UnknownState> {
         return <any>this.options.knownState!;
     }
 }
@@ -249,7 +247,7 @@ export class ReducerFactoryBox<
 
     public addReducer<State, Payload>(
         actionTypeOrActionCreator: ActionTypeOrActionCreator<Payload>,
-        reducer: (this: PartialReducerContextGetInitialKnownState<KnownState, UnknownState>,
+        reducer: (this: PartialReducerContext<KnownState, UnknownState>,
             state: FinalState<KnownState, UnknownState>,
             action: Action<Payload>) => StateReturnType<State, KnownState, UnknownState>
     ): ReducerReducerFactoryOptions<
@@ -263,7 +261,7 @@ export class ReducerFactoryBox<
         IsUnknownStateKnown
     > {
         reducer = reducer.bind({
-            getInitialKnownState: this.getInitialKnownState
+            initialKnownState: this.initialKnownState
         });
 
         const unknownReducerMap = <any>Object.assign(this.options.unknownReducerMap, { [actionTypeOrActionCreator.toString()]: reducer });
@@ -277,7 +275,7 @@ export class ReducerFactoryBox<
 
     public addPayloadReducer<Payload, State>(
         actionTypeOrActionCreator: ActionTypeOrActionCreator<Payload>,
-        actionReducer: (this: PartialReducerContextGetInitialKnownState<KnownState, UnknownState>, action: Action<Payload>) => StateReturnType<State, KnownState, UnknownState>
+        actionReducer: (this: PartialReducerContext<KnownState, UnknownState>, action: Action<Payload>) => StateReturnType<State, KnownState, UnknownState>
     ): ReducerReducerFactoryOptions<
         State,
         Payload,
@@ -289,7 +287,7 @@ export class ReducerFactoryBox<
         IsUnknownStateKnown
     > {
         const reducer = (_state: UnionPropsAndTypes<KnownState, UnknownState>, action: Action<Payload>) => actionReducer.call({
-            getInitialKnownState: this.getInitialKnownState
+            initialKnownState: this.initialKnownState
         }, action)
 
         return this.addReducer<State, Payload>(actionTypeOrActionCreator, reducer);
@@ -425,7 +423,7 @@ export class ReducerFactory<
     public addReducer<State, Payload>(
         actionTypeOrActionCreator: ActionTypeOrActionCreator<Payload>,
         reducer: (
-            this: PartialReducerContextGetInitialKnownState<KnownState, UnknownState>,
+            this: PartialReducerContext<KnownState, UnknownState>,
             state: FinalState<KnownState, UnknownState>,
             action: Action<Payload>) => StateReturnType<
                 State,
@@ -447,7 +445,7 @@ export class ReducerFactory<
 
     public addPayloadReducer<Payload, State>(
         actionTypeOrActionCreator: ActionTypeOrActionCreator<Payload>,
-        actionReducer: (this: PartialReducerContextGetInitialKnownState<KnownState, UnknownState>, action: Action<Payload>) =>
+        actionReducer: (this: PartialReducerContext<KnownState, UnknownState>, action: Action<Payload>) =>
             StateReturnType<State, KnownState, UnknownState>): ReducerReducerFactory<
                 State,
                 Payload,
