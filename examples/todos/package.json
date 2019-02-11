@@ -1,0 +1,32 @@
+{
+  "name": "react-redux-todo-ts",
+  "version": "1.0.0",
+  "license": "MIT",
+  "author": {
+    "name": "Antoine Muller",
+    "email": "nemak121@gmail.com"
+  },
+  "dependencies": {
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0",
+    "react-redux": "^5.0.6",
+    "react-scripts-ts": "2.8.0",
+    "redux": "^3.7.2",
+    "reselect": "^3.0.1"
+  },
+  "scripts": {
+    "start": "react-scripts-ts start",
+    "build": "react-scripts-ts build",
+    "test": "react-scripts-ts test --env=jsdom",
+    "eject": "react-scripts-ts eject"
+  },
+  "devDependencies": {
+    "@types/jest": "^21.1.9",
+    "@types/node": "^8.5.2",
+    "@types/react": "^16.0.31",
+    "@types/react-dom": "^16.0.3",
+    "@types/react-redux": "^5.0.14",
+    "@types/redux-logger": "^3.0.5",
+    "redux-logger": "^3.0.6"
+  }
+}
