@@ -1,106 +1,8 @@
-import { autoBind } from "@teronis/ts-auto-bind-es6";
 import { ReducerMap, ActionFunctions, Action, handleActions, Reducer } from "redux-actions";
-import { Not, If, Or, And } from "typescript-logic";
-import { Extends, AnyKeys, ExtractObject, ExtractObjectExceptArray, ExcludeObjectExceptArray, ExcludeObject } from "@teronis/ts-definitions";
-
-type IfNotNever2<A, B> = If<
-    Not<Extends<A, never>>,
-    A,
-    B
->;
-
-type IfNotNever3<N, A, B> = If<
-    Not<Extends<N, never>>,
-    A,
-    B
->;
-
-/** Intersect only those types that are related to the same property key of object A and B. This function is only applicable on object types. */
-type IntersectProps<
-    A,
-    B,
-    MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>
-    > = { [K in MutualKeys extends AnyKeys<A> & AnyKeys<B> ? MutualKeys : never]: A[K] | B[K] };
-
-/** Does A have any object in his union? Returns type of true or false. */
-type HasExtractableObject<A> = Not<Extends<ExtractObject<A>, never>>;
-
-type HasExtractableObjectWithoutArray<A> = Not<Extends<ExtractObjectExceptArray<A>, never>>;
-
-/** Creates an union of any extractable objects. */
-type UnionExtractableObjects<A, B> = If<
-    // If A or B has object ..
-    Or<HasExtractableObject<A>, HasExtractableObject<B>>,
-    // .. then return the one or the other object
-    ExtractObject<A> | ExtractObject<B>,
-    // .. else
-    {}
->;
-
-/** Combines only those types that are related to the same property key of object A and B and include the remaining keys of object A. */
-type UnionPropsExcept<
-    A,
-    B,
-    MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
-    LeftKeys extends IfNotNever3<MutualKeys, Exclude<AnyKeys<A>, MutualKeys>, AnyKeys<A>> = IfNotNever3<MutualKeys, Exclude<AnyKeys<A>, MutualKeys>, AnyKeys<A>>,
-    // > = TakeoverProps<IntersectProps<A, B, MutualKeys>, A, LeftKeys>
-    > = IntersectProps<A, B, MutualKeys> & Pick<A, LeftKeys>;
-
-/** Combines only those types that are related to the same property key of object A and B and include the remaining keys of object A and B. */
-type UnionProps<
-    A,
-    B,
-    MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
-    LeftKeys extends IfNotNever3<MutualKeys, Exclude<AnyKeys<A>, MutualKeys>, AnyKeys<A>> = IfNotNever3<MutualKeys, Exclude<AnyKeys<A>, MutualKeys>, AnyKeys<A>>,
-    RightKeys extends IfNotNever3<MutualKeys, Exclude<AnyKeys<B>, MutualKeys>, AnyKeys<B>> = IfNotNever3<MutualKeys, Exclude<AnyKeys<B>, MutualKeys>, AnyKeys<B>>
-    // > = TakeoverProps<UnionPropsExcept<A, B, MutualKeys, LeftKeys>, B, RightKeys>;
-    > = UnionPropsExcept<A, B, MutualKeys, LeftKeys> & Pick<B, RightKeys>;
-
-/** Intersect only the primitive types of Object A and Object B. */
-type IntersectPrimitiveTypes<A, B> = Exclude<A | B, Exclude<A, B> | Exclude<B, A> | object>;
-
-type IntersectPrimitiveTypesAndArrays<
-    A, B,
-    A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
-    B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>,
-    > = ExcludeObjectExceptArray<Exclude<A2 | B2, Exclude<A2, B2> | Exclude<B2, A2>>>;
-
-type UnionPrimitiveTypesExcept<A, B> = Exclude<A | B, Exclude<B, A> | object>;
-
-type UnionPrimitiveTypesAndArraysExcept<
-    A, B,
-    A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
-    B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>
-    > = Exclude<A2 | B2, Exclude<B2, A2>>;
-
-/** Create an union of the primitive types of Object A and Object B. */
-type UnionPrimitiveTypes<A, B> = ExcludeObject<A | B>;
-
-type UnionPrimitiveTypesAndArrays<A, B> = ExcludeObjectExceptArray<A | B>;
-
-type PreferPrimitivesOverProps<Props, Primitives> = If<
-    And<Not<Extends<Primitives, never>>, And<Extends<Props, {}>, Extends<{}, Props>>>,
-    Primitives,
-    Props | Primitives
->;
-
-type IntersectPropsAndTypes<
-    A, B,
-    > = PreferPrimitivesOverProps<IntersectProps<ExtractObjectExceptArray<A>, ExtractObjectExceptArray<B>>, IntersectPrimitiveTypesAndArrays<A, B>>;
-
-type UnionPropsAndTypesExcept<
-    A, B,
-    > = PreferPrimitivesOverProps<UnionPropsExcept<ExtractObjectExceptArray<A>, ExtractObjectExceptArray<B>>, UnionPrimitiveTypesAndArraysExcept<A, B>>;
-
-type UnionPropsAndTypes<
-    A, B,
-    > = PreferPrimitivesOverProps<UnionProps<ExtractObjectExceptArray<A>, ExtractObjectExceptArray<B>>, UnionPrimitiveTypesAndArrays<A, B>>;
-
-type PropsAndTypesExcept<A, B> = PreferPrimitivesOverProps<If<
-    And<HasExtractableObjectWithoutArray<A>, HasExtractableObjectWithoutArray<B>>,
-    Pick<ExtractObjectExceptArray<A>, Exclude<AnyKeys<ExtractObjectExceptArray<A>>, AnyKeys<ExtractObjectExceptArray<B>>>>,
-    ExtractObjectExceptArray<A>
->, Exclude<ExcludeObjectExceptArray<A>, ExcludeObjectExceptArray<B>>>;
+import { If } from "typescript-logic";
+import { Extends, ExtractObject, ExcludeObject } from "@teronis/ts-definitions";
+import { PropsAndTypesExcept, UnionPropsAndTypes, UnionPropsExcept, UnionPropsAndTypesExcept } from "./utilityTypes";
+import { CombinableReducer } from "./utilityFunctions";
 
 type ActionTypeOrActionCreator<P> = ActionFunctions<P> | string;
 
@@ -131,13 +33,6 @@ type FinalState<KnownState, UnknownState> = UnionPropsAndTypes<KnownState, Unkno
 type PartialReducerContext<KnownState, UnknownState> = {
     initialKnownState: FinalState<KnownState, UnknownState>
 };
-
-export type CombinableReducer<InvalidReduxReducer> = InvalidReduxReducer extends (state: infer S, action: infer A) => any ? (state: S | undefined, action: A) => S : never;
-
-/** An utility function, that makes a reducer type defintion for `combineReducers` (@redux) valid by adding `undefined` to the state type definition. */
-export function asCombinableReducer<S, A>(reducer: (state: S, action: A) => S) {
-    return <CombinableReducer<typeof reducer>>reducer;
-}
 
 export type ReducerFactoryOptions<
     KnownState,
