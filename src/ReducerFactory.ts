@@ -130,13 +130,17 @@ type PreferLocalOverGlobalExpandStateMode<GlobalExpandStateMode extends ReducerF
 
 
 type InheritedState<State, KnownState, UnknownState> = IfNot2<UnionPrimitiveTypesAndArrays<KnownState, UnknownState>, ExcludeObjectExceptArray<State>> |
-    (ExtractObjectExceptArray<State> & KnownState & UnknownState);
+    (ExtractObjectExceptArray<State> &
+        ExtractObjectExceptArray<KnownState> &
+        ExtractObjectExceptArray<UnknownState>);
 
 type ExtendedState<State, KnownState, UnknownState> = ExcludeObjectExceptArray<State> | ExcludeObjectExceptArray<KnownState> | ExcludeObjectExceptArray<UnknownState> |
-    (ExtractObjectExceptArray<State> & UnionPropsExcept<KnownState, State> & UnionPropsExcept<UnknownState, State>);
+    (ExtractObjectExceptArray<State> &
+        UnionPropsExcept<ExtractObjectExceptArray<KnownState>, ExtractObjectExceptArray<State>> &
+        UnionPropsExcept<ExtractObjectExceptArray<UnknownState>, ExtractObjectExceptArray<State>>);
 
 type RetainedState<KnownState, UnknownState> = UnionPrimitiveTypesAndArrays<KnownState, UnknownState> |
-    (KnownState & UnknownState);
+    (FinalState<KnownState, UnknownState>);
 
 type ExpandedState<State, Mode extends ReducerFactoryExpandStateMode, KnownState, UnknownState> = If< // If
     Extends<Mode, ReducerFactoryInheritStateMode>,
@@ -158,6 +162,15 @@ type ReducedState<State, KnownState, IsKnownStateKnown> = If<
     State
 >;
 
+/**
+ * We want the same behaviour like `UnionPropsAndTypes<UnknownState, ReducedState>`, 
+ * but we want prevent that the primitive type gets extended for example by `any[]`
+ */
+type InheritedStateUnionPropsAndTypes<ReducedState, KnownState, UnknownState> = PreferPrimitivesOverProps<
+    UnionProps<ExtractObjectExceptArray<UnknownState>, ExtractObjectExceptArray<ReducedState>>,
+    IfNot2<UnionPrimitiveTypesAndArrays<KnownState, UnknownState>, ExcludeObjectExceptArray<ReducedState>>
+>
+
 type ExtendedUnknownState<
     LocalState,
     MixedExpandStateMode extends ReducerFactoryExpandStateMode,
@@ -170,7 +183,7 @@ type ExtendedUnknownState<
         Extends<IsUnknownStateKnown, null>,
         If< // If
             Extends<MixedExpandStateMode, ReducerFactoryInheritStateMode>,
-            UnionPropsAndTypes<UnknownState, _ReducedState>,
+            InheritedStateUnionPropsAndTypes<_ReducedState, KnownState, UnknownState>,
             If< // Else if
                 Extends<MixedExpandStateMode, ReducerFactoryRetainStateMode>,
                 // UnionPropsAndTypes<UnknownState, _ReducedState>,
@@ -448,7 +461,7 @@ export class ReducerFactory<
         return <any>this;
     }
 
-    public extendUnknownState<State>(): ReducerFactory<
+    public extendUnknownState<State, ExpandStateMode extends ReducerFactoryExpandStateMode = ReducerFactoryExtendStateMode>(): ReducerFactory<
         KnownState,
         KnownStatePayload,
         ExtendedUnknownState<

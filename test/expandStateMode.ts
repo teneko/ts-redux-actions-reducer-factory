@@ -57,29 +57,28 @@ ReducerFactory
     // Only "string[]" should be inferred
     .toReducer([]);
 
-// Bug clarification
+// Bug -> Fixed -> Error intended
 ReducerFactory
     .create()
     .extendUnknownState<string[]>()
     .setExpandStateMode("InheritState")
-    // [] results in any[] and is valid by mistake
+    // [] results in any[] and is valid by mistake, but thanks to "InheritState"..
     .addReducer(createVoid1Action, (s, a) => [])
-    .addReducer(createVoid1Action, (s, a) => [])
-    // So becomes any array valid
+    // ..we can not extend previous extended primitive types
     .toReducer([2]);
 
-// Solution #1 / Error intended
+// Alternative #1 / Error intended
 ReducerFactory
     .create()
     .extendUnknownState<string[]>()
-    // We retain our state in the *next* function
+    // We retain previous state after this state return for next expansions or initialization
     .addReducer([createVoid1Action, "RetainState"], (s, a) => [])
     .toReducer([true]);
 
-// Solution #2 / Error intended
+// Alternative #2 / Error intended
 ReducerFactory
     .create()
     .extendUnknownState<string[]>()
-    // We retain our state in the *next* function
+    // We retain previous state after this state return for next expansions or initialization
     .addReducer(createVoid1Action, (s, a) => <typeof s>[])
     .toReducer([true]);
