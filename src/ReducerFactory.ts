@@ -22,8 +22,8 @@ type IfNot3<N, A, B, NotWhen = never> = If<
 type IntersectProps<
     A,
     B,
-    MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>
-    > = { [K in MutualKeys extends AnyKeys<A> & AnyKeys<B> ? MutualKeys : never]: A[K] | B[K] };
+    _MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>
+    > = { [K in _MutualKeys extends AnyKeys<A> & AnyKeys<B> ? _MutualKeys : never]: A[K] | B[K] };
 
 /** Does A have any object in his union? Returns export type of true or false. */
 type HasExtractableObject<A> = Not<Extends<ExtractObject<A>, never>>;
@@ -44,37 +44,35 @@ type UnionExtractableObjects<A, B> = If<
 type UnionPropsExcept<
     A,
     B,
-    MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
-    LeftKeys extends IfNot3<MutualKeys, Exclude<AnyKeys<A>, MutualKeys>, AnyKeys<A>> = IfNot3<MutualKeys, Exclude<AnyKeys<A>, MutualKeys>, AnyKeys<A>>,
-    // > = TakeoverProps<IntersectProps<A, B, MutualKeys>, A, LeftKeys>
-    > = IntersectProps<A, B, MutualKeys> & Pick<A, LeftKeys>;
+    _MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
+    _LeftKeys extends IfNot3<_MutualKeys, Exclude<AnyKeys<A>, _MutualKeys>, AnyKeys<A>> = IfNot3<_MutualKeys, Exclude<AnyKeys<A>, _MutualKeys>, AnyKeys<A>>,
+    > = IntersectProps<A, B, _MutualKeys> & Pick<A, _LeftKeys>;
 
 /** Combines only those types that are related to the same property key of object A and B and include the remaining keys of object A and B. */
 type UnionProps<
     A,
     B,
-    MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
-    LeftKeys extends IfNot3<MutualKeys, Exclude<AnyKeys<A>, MutualKeys>, AnyKeys<A>> = IfNot3<MutualKeys, Exclude<AnyKeys<A>, MutualKeys>, AnyKeys<A>>,
-    RightKeys extends IfNot3<MutualKeys, Exclude<AnyKeys<B>, MutualKeys>, AnyKeys<B>> = IfNot3<MutualKeys, Exclude<AnyKeys<B>, MutualKeys>, AnyKeys<B>>
-    // > = TakeoverProps<UnionPropsExcept<A, B, MutualKeys, LeftKeys>, B, RightKeys>;
-    > = UnionPropsExcept<A, B, MutualKeys, LeftKeys> & Pick<B, RightKeys>;
+    _MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
+    _LeftKeys extends IfNot3<_MutualKeys, Exclude<AnyKeys<A>, _MutualKeys>, AnyKeys<A>> = IfNot3<_MutualKeys, Exclude<AnyKeys<A>, _MutualKeys>, AnyKeys<A>>,
+    _RightKeys extends IfNot3<_MutualKeys, Exclude<AnyKeys<B>, _MutualKeys>, AnyKeys<B>> = IfNot3<_MutualKeys, Exclude<AnyKeys<B>, _MutualKeys>, AnyKeys<B>>
+    > = UnionPropsExcept<A, B, _MutualKeys, _LeftKeys> & Pick<B, _RightKeys>;
 
 /** Intersect only the primitive types of Object A and Object B. */
 type IntersectPrimitiveTypes<A, B> = Exclude<A | B, Exclude<A, B> | Exclude<B, A> | object>;
 
 type IntersectPrimitiveTypesAndArrays<
     A, B,
-    A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
-    B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>,
-    > = ExcludeObjectExceptArray<Exclude<A2 | B2, Exclude<A2, B2> | Exclude<B2, A2>>>;
+    _A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
+    _B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>,
+    > = ExcludeObjectExceptArray<Exclude<_A2 | _B2, Exclude<_A2, _B2> | Exclude<_B2, _A2>>>;
 
 type UnionPrimitiveTypesExcept<A, B> = Exclude<A | B, Exclude<B, A> | object>;
 
 type UnionPrimitiveTypesAndArraysExcept<
     A, B,
-    A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
-    B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>
-    > = Exclude<A2 | B2, Exclude<B2, A2>>;
+    _A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
+    _B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>
+    > = Exclude<_A2 | _B2, Exclude<_B2, _A2>>;
 
 /** Create an union of the primitive types of Object A and Object B. */
 type UnionPrimitiveTypes<A, B> = ExcludeObject<A | B>;
@@ -105,10 +103,6 @@ type PropsAndTypesExcept<A, B> = PreferPrimitivesOverProps<If<
     ExtractObjectExceptArray<A>
 >, Exclude<ExcludeObjectExceptArray<A>, ExcludeObjectExceptArray<B>>>;
 
-// type PreferFirstArray<A, B> = If<
-//     And<Extends<A, any[]>, Extends<B, any[]>
-//     >
-
 /* UTILITY: TYPES & FUNCTIONS */
 
 export type CombinableReducer<InvalidReduxReducer> = InvalidReduxReducer extends (state: infer S, action: infer A) => any ? (state: S | undefined, action: A) => S : never;
@@ -122,38 +116,18 @@ export function asCombinableReducer<S, A>(reducer: (state: S, action: A) => S) {
 
 type ActionTypeOrActionCreator<Payload> = ActionFunctions<Payload> | string;
 
+
 type ReducerFactoryExtendStateMode = "ExtendState";
 type ReducerFactoryInheritStateMode = "InheritState";
 type ReducerFactoryRetainStateMode = "RetainState";
 type ReducerFactoryExpandStateMode = ReducerFactoryExtendStateMode | ReducerFactoryInheritStateMode | ReducerFactoryRetainStateMode;
-type DefaultReducerFactoryExpandStateMode = ReducerFactoryExpandStateMode | undefined;
 
-type PreferLocalOverGlobalExpandStateMode<GlobalExpandStateMode extends ReducerFactoryExpandStateMode, LocalExpandStateMode extends DefaultReducerFactoryExpandStateMode> = IfNot2AndAssign<
-    LocalExpandStateMode,
-    GlobalExpandStateMode,
-    ReducerFactoryExpandStateMode,
-    undefined>
+type DefaultReducerFactoryExpandStateMode = ReducerFactoryExtendStateMode;
+type IndefinableReducerFactoryExpandStateMode = ReducerFactoryExpandStateMode | undefined;
 
-type ReducerInference<Payload, Mode extends ReducerFactoryExpandStateMode | undefined> = ActionTypeOrActionCreator<Payload> | [ActionTypeOrActionCreator<Payload>, Mode];
+type PreferLocalOverGlobalExpandStateMode<GlobalExpandStateMode extends ReducerFactoryExpandStateMode, LocalExpandStateMode extends IndefinableReducerFactoryExpandStateMode> =
+    LocalExpandStateMode extends undefined ? GlobalExpandStateMode : LocalExpandStateMode;
 
-type ReducedState<State, KnownState, IsKnownStateKnown> = If<
-    Extends<IsKnownStateKnown, null>,
-    PropsAndTypesExcept<State, KnownState>,
-    State
->;
-
-type ExtendedUnknownState<
-    State,
-    KnownState,
-    IsKnownStateKnown,
-    UnknownState,
-    IsUnknownStateKnown,
-    _ReducedState extends ReducedState<State, KnownState, IsKnownStateKnown> = ReducedState<State, KnownState, IsKnownStateKnown>
-    > = If<
-        Extends<IsUnknownStateKnown, null>,
-        UnionPropsAndTypes<_ReducedState, UnknownState>,
-        _ReducedState
-    >;
 
 type InheritedState<State, KnownState, UnknownState> = IfNot2<UnionPrimitiveTypesAndArrays<KnownState, UnknownState>, ExcludeObjectExceptArray<State>> |
     (ExtractObjectExceptArray<State> & KnownState & UnknownState);
@@ -162,17 +136,56 @@ type ExtendedState<State, KnownState, UnknownState> = ExcludeObjectExceptArray<S
     (ExtractObjectExceptArray<State> & UnionPropsExcept<KnownState, State> & UnionPropsExcept<UnknownState, State>);
 
 type RetainedState<KnownState, UnknownState> = UnionPrimitiveTypesAndArrays<KnownState, UnknownState> |
-    KnownState & UnknownState;
+    (KnownState & UnknownState);
 
-type ExpandedState<State, Mode extends ReducerFactoryExpandStateMode, KnownState, UnknownState> = If<
+type ExpandedState<State, Mode extends ReducerFactoryExpandStateMode, KnownState, UnknownState> = If< // If
     Extends<Mode, ReducerFactoryInheritStateMode>,
     InheritedState<State, KnownState, UnknownState>,
-    If<
+    If< // else if
         Extends<Mode, ReducerFactoryRetainStateMode>,
         RetainedState<KnownState, UnknownState>,
+        // else
         ExtendedState<State, KnownState, UnknownState>
     >
 >;
+
+
+type ReducerInference<Payload, Mode extends IndefinableReducerFactoryExpandStateMode> = ActionTypeOrActionCreator<Payload> | [ActionTypeOrActionCreator<Payload>, Mode];
+
+type ReducedState<State, KnownState, IsKnownStateKnown> = If<
+    Extends<IsKnownStateKnown, null>,
+    PropsAndTypesExcept<State, KnownState>,
+    State
+>;
+
+type ExtendedUnknownState<
+    LocalState,
+    MixedExpandStateMode extends ReducerFactoryExpandStateMode,
+    KnownState,
+    IsKnownStateKnown,
+    UnknownState,
+    IsUnknownStateKnown,
+    _ReducedState extends ReducedState<LocalState, KnownState, IsKnownStateKnown> = ReducedState<LocalState, KnownState, IsKnownStateKnown>
+    > = If<
+        Extends<IsUnknownStateKnown, null>,
+        If< // If
+            Extends<MixedExpandStateMode, ReducerFactoryInheritStateMode>,
+            UnionPropsAndTypes<UnknownState, _ReducedState>,
+            If< // Else if
+                Extends<MixedExpandStateMode, ReducerFactoryRetainStateMode>,
+                // UnionPropsAndTypes<UnknownState, _ReducedState>,
+                /* 
+                If we want to retain the UnknownState, then we only want UnknownState as *next* state
+                This logic eliminates the bug, that any[] or [] gets unioned, that are assignable to any other typed arrays,
+                The behaviour is reflected in the tests.
+                */
+                UnknownState,
+                // Else
+                UnionPropsAndTypes<UnknownState, _ReducedState>
+            >
+        >,
+        _ReducedState
+    >;
 
 type FinalState<KnownState, UnknownState> = UnionPropsAndTypes<KnownState, UnknownState>;
 
@@ -188,38 +201,45 @@ export type ReducerFactoryOptions<
     /* They are needed for inference purposes */
     IsKnownStateKnown extends undefined | null,
     IsUnknownStateKnown extends undefined | null,
+    ExpandStateMode extends ReducerFactoryExpandStateMode
     > = {
         knownState?: KnownState;
         knownReducerMap: ReducerMap<KnownState, KnownStatePayload>;
         unknownReducerMap: ReducerMap<UnknownState, UnknownStatePayload>;
     };
 
+type ReducerKnownState<_State, KnownState, IsKnownStateKnown> = If<
+    Extends<IsKnownStateKnown, null>,
+    UnionPropsAndTypesExcept<KnownState, _State>,
+    KnownState
+>;
+
 type ReducerReducerFactoryOptions<
-    State,
-    Payload,
+    LocalState,
+    LocalPayload,
+    LocalExpandStateMode extends ReducerFactoryExpandStateMode,
     KnownState,
     KnownStatePayload,
     UnknownState,
     UnknownStatePayload,
     IsKnownStateKnown extends undefined | null,
-    IsUnknownStateKnown extends undefined | null
+    IsUnknownStateKnown extends undefined | null,
+    ExpandStateMode extends ReducerFactoryExpandStateMode
     > = ReducerFactoryOptions<
-        If<
-            Extends<IsKnownStateKnown, null>,
-            UnionPropsAndTypesExcept<KnownState, State>,
-            KnownState
-        >,
+        ReducerKnownState<LocalState, KnownState, IsKnownStateKnown>,
         KnownStatePayload,
         ExtendedUnknownState<
-            State,
+            LocalState,
+            LocalExpandStateMode,
             KnownState,
             IsKnownStateKnown,
             UnknownState,
             IsUnknownStateKnown
         >,
-        UnknownStatePayload | Payload,
+        UnknownStatePayload | LocalPayload,
         IsKnownStateKnown,
-        null>;
+        null,
+        ExpandStateMode>;
 
 export class ReducerFactoryBase<
     KnownState,
@@ -228,6 +248,7 @@ export class ReducerFactoryBase<
     UnknownStatePayload,
     IsKnownStateKnown extends undefined | null,
     IsUnknownStateKnown extends undefined | null,
+    ExpandStateMode extends ReducerFactoryExpandStateMode
     > {
     protected options: ReducerFactoryOptions<
         KnownState,
@@ -235,7 +256,8 @@ export class ReducerFactoryBase<
         UnknownState,
         UnknownStatePayload,
         IsKnownStateKnown,
-        IsUnknownStateKnown
+        IsUnknownStateKnown,
+        ExpandStateMode
     >;
 
     public constructor(options: ReducerFactoryOptions<
@@ -244,7 +266,8 @@ export class ReducerFactoryBase<
         UnknownState,
         UnknownStatePayload,
         IsKnownStateKnown,
-        IsUnknownStateKnown
+        IsUnknownStateKnown,
+        ExpandStateMode
     >) {
         this.options = {
             knownState: options.knownState,
@@ -264,15 +287,17 @@ export class ReducerFactoryBox<
     KnownStatePayload,
     UnknownState,
     UnknownStatePayload,
-    IsKnownStateKnown extends undefined | null = undefined,
-    IsUnknownStateKnown extends undefined | null = undefined
+    IsKnownStateKnown extends undefined | null,
+    IsUnknownStateKnown extends undefined | null,
+    ExpandStateMode extends ReducerFactoryExpandStateMode
     > extends ReducerFactoryBase<
     KnownState,
     KnownStatePayload,
     UnknownState,
     UnknownStatePayload,
     IsKnownStateKnown,
-    IsUnknownStateKnown
+    IsUnknownStateKnown,
+    ExpandStateMode
     > {
     public constructor(base: ReducerFactoryBase<
         KnownState,
@@ -280,26 +305,33 @@ export class ReducerFactoryBox<
         UnknownState,
         UnknownStatePayload,
         IsKnownStateKnown,
-        IsUnknownStateKnown
+        IsUnknownStateKnown,
+        ExpandStateMode
     >) {
         // @ts-ignore Intended access.. (There is currently no "internal"-modifier)
         super(base.options);
     }
 
-    public addReducer<_State, _Payload, _Mode extends ReducerFactoryExpandStateMode>(
-        inference: ReducerInference<_Payload, _Mode>,
+    public addReducer<_State, _Payload, _ExpandStateMode extends IndefinableReducerFactoryExpandStateMode = undefined>(
+        inference: ReducerInference<_Payload, _ExpandStateMode>,
         reducer: (this: PartialReducerContext<KnownState, UnknownState>,
             state: FinalState<KnownState, UnknownState>,
-            action: Action<_Payload>) => ExpandedState<_State, _Mode, KnownState, UnknownState>
+            action: Action<_Payload>) => ExpandedState<
+                _State,
+                PreferLocalOverGlobalExpandStateMode<ExpandStateMode, _ExpandStateMode>,
+                KnownState,
+                UnknownState>
     ): ReducerReducerFactoryOptions<
         _State,
         _Payload,
+        PreferLocalOverGlobalExpandStateMode<ExpandStateMode, _ExpandStateMode>,
         KnownState,
         KnownStatePayload,
         UnknownState,
         UnknownStatePayload,
         IsKnownStateKnown,
-        IsUnknownStateKnown
+        IsUnknownStateKnown,
+        ExpandStateMode
     > {
         reducer = reducer.bind({
             initialKnownState: this.initialKnownState
@@ -315,30 +347,36 @@ export class ReducerFactoryBox<
         });
     }
 
-    public addPayloadReducer<_State, _Payload, _Mode extends ReducerFactoryExpandStateMode>(
-        inference: ReducerInference<_Payload, _Mode>,
-        actionReducer: (this: PartialReducerContext<KnownState, UnknownState>, action: Action<_Payload>) => ExpandedState<_State, _Mode, KnownState, UnknownState>
+    public addPayloadReducer<_State, _Payload, _ExpandStateMode extends IndefinableReducerFactoryExpandStateMode = undefined>(
+        inference: ReducerInference<_Payload, _ExpandStateMode>,
+        actionReducer: (this: PartialReducerContext<KnownState, UnknownState>, action: Action<_Payload>) => ExpandedState<_State,
+            PreferLocalOverGlobalExpandStateMode<ExpandStateMode, _ExpandStateMode>,
+            KnownState,
+            UnknownState>
     ): ReducerReducerFactoryOptions<
         _State,
         _Payload,
+        PreferLocalOverGlobalExpandStateMode<ExpandStateMode, _ExpandStateMode>,
         KnownState,
         KnownStatePayload,
         UnknownState,
         UnknownStatePayload,
         IsKnownStateKnown,
-        IsUnknownStateKnown
+        IsUnknownStateKnown,
+        ExpandStateMode
     > {
         const reducer = (_state: UnionPropsAndTypes<KnownState, UnknownState>, action: Action<_Payload>) => actionReducer.call({
             initialKnownState: this.initialKnownState
         }, action)
 
-        return <any>this.addReducer<_State, _Payload, _Mode>(inference, reducer);
+        return <any>this.addReducer<_State, _Payload, _ExpandStateMode>(<any>inference, <any>reducer);
     }
 }
 
 type ReducerReducerFactory<
-    State,
-    Payload,
+    LocalState,
+    LocalPayload,
+    LocalExpandStateMode extends ReducerFactoryExpandStateMode,
     KnownState,
     KnownStatePayload,
     UnknownState,
@@ -347,20 +385,17 @@ type ReducerReducerFactory<
     IsUnknownStateKnown extends undefined | null,
     ExpandStateMode extends ReducerFactoryExpandStateMode
     > = ReducerFactory<
-        If<
-            Extends<IsKnownStateKnown, null>,
-            UnionPropsAndTypesExcept<KnownState, State>,
-            KnownState
-        >,
+        ReducerKnownState<LocalState, KnownState, IsKnownStateKnown>,
         KnownStatePayload,
         ExtendedUnknownState<
-            State,
+            LocalState,
+            LocalExpandStateMode,
             KnownState,
             IsKnownStateKnown,
             UnknownState,
             IsUnknownStateKnown
         >,
-        UnknownStatePayload | Payload,
+        UnknownStatePayload | LocalPayload,
         IsKnownStateKnown,
         null,
         ExpandStateMode
@@ -373,14 +408,15 @@ export class ReducerFactory<
     UnknownStatePayload,
     IsKnownStateKnown extends undefined | null = undefined,
     IsUnknownStateKnown extends undefined | null = undefined,
-    ExpandStateMode extends ReducerFactoryExpandStateMode = "ExtendState"
+    ExpandStateMode extends ReducerFactoryExpandStateMode = DefaultReducerFactoryExpandStateMode
     > extends ReducerFactoryBase<
     KnownState,
     KnownStatePayload,
     UnknownState,
     UnknownStatePayload,
     IsKnownStateKnown,
-    IsUnknownStateKnown
+    IsUnknownStateKnown,
+    ExpandStateMode
     > {
     static create() {
         return new ReducerFactoryWithKnownState();
@@ -392,7 +428,8 @@ export class ReducerFactory<
         UnknownState,
         UnknownStatePayload,
         IsKnownStateKnown,
-        IsUnknownStateKnown> = {
+        IsUnknownStateKnown,
+        ExpandStateMode> = {
             knownReducerMap: {},
             unknownReducerMap: {}
         }) {
@@ -415,7 +452,12 @@ export class ReducerFactory<
         KnownState,
         KnownStatePayload,
         ExtendedUnknownState<
-            State, KnownState, IsKnownStateKnown, UnknownState, IsUnknownStateKnown
+            State,
+            ExpandStateMode,
+            KnownState,
+            IsKnownStateKnown,
+            UnknownState,
+            IsUnknownStateKnown
         >,
         UnknownStatePayload,
         IsKnownStateKnown,
@@ -449,14 +491,16 @@ export class ReducerFactory<
                 UnknownState,
                 UnknownStatePayload,
                 IsKnownStateKnown,
-                IsUnknownStateKnown>) =>
+                IsUnknownStateKnown,
+                ExpandStateMode>) =>
             ReducerFactoryOptions<
                 _KnownState,
                 _knownStatePayload,
                 _UnknownState,
                 _UnknownStatePayload,
                 _IsKnownStateKnown,
-                _IsUnknownStateKnown>
+                _IsUnknownStateKnown,
+                _ExpandStateMode>
     ): ReducerFactory<
         _KnownState,
         _knownStatePayload,
@@ -468,8 +512,8 @@ export class ReducerFactory<
         return <any>new ReducerFactory(<any>callback(<any>new ReducerFactoryBox(<any>this)));
     }
 
-    public addReducer<_State, _Payload, _ExpandStateMode extends DefaultReducerFactoryExpandStateMode = undefined>(
-        inference: ReducerInference<_Payload, _ExpandStateMode>,
+    public addReducer<_State, _Payload, _ExpandStateMode extends IndefinableReducerFactoryExpandStateMode = undefined>(
+        inference: ActionTypeOrActionCreator<_Payload> | [ActionTypeOrActionCreator<_Payload>, _ExpandStateMode],
         reducer: (
             this: PartialReducerContext<KnownState, UnknownState>,
             state: FinalState<KnownState, UnknownState>,
@@ -481,18 +525,19 @@ export class ReducerFactory<
     ): ReducerReducerFactory<
         _State,
         _Payload,
+        PreferLocalOverGlobalExpandStateMode<ExpandStateMode, _ExpandStateMode>,
         KnownState,
         KnownStatePayload,
         UnknownState,
         UnknownStatePayload,
         IsKnownStateKnown,
         IsUnknownStateKnown,
-        PreferLocalOverGlobalExpandStateMode<ExpandStateMode, _ExpandStateMode>
+        ExpandStateMode
     > {
         return <any>new ReducerFactory(<any>new ReducerFactoryBox(<any>this).addReducer(<any>inference, <any>reducer));
     }
 
-    public addPayloadReducer<_State, _Payload, _ExpandStateMode extends DefaultReducerFactoryExpandStateMode = undefined>(
+    public addPayloadReducer<_State, _Payload, _ExpandStateMode extends IndefinableReducerFactoryExpandStateMode = undefined>(
         inference: ReducerInference<_Payload, _ExpandStateMode>,
         actionReducer: (this: PartialReducerContext<KnownState, UnknownState>, action: Action<_Payload>) =>
             ExpandedState<
@@ -503,13 +548,14 @@ export class ReducerFactory<
     ): ReducerReducerFactory<
         _State,
         _Payload,
+        PreferLocalOverGlobalExpandStateMode<ExpandStateMode, _ExpandStateMode>,
         KnownState,
         KnownStatePayload,
         UnknownState,
         UnknownStatePayload,
         IsKnownStateKnown,
         IsUnknownStateKnown,
-        PreferLocalOverGlobalExpandStateMode<ExpandStateMode, _ExpandStateMode>
+        ExpandStateMode
     > {
         return <any>new ReducerFactory(<any>new ReducerFactoryBox(<any>this).addPayloadReducer(<any>inference, <any>actionReducer));
     }
@@ -566,7 +612,9 @@ export class ReducerFactory<
 }
 
 class ReducerFactoryWithKnownState extends ReducerFactory<{}, {}, {}, {}> {
-    public withKnownState(unknownState: {}) {
-        return this.acceptUnknownState(unknownState);
+    public withKnownState<KnownState>(knownState: KnownState) {
+        return this.acceptUnknownState(knownState);
     }
 }
+
+type test = ExtendedState<any[], {}, string[]>;

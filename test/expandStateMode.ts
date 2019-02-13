@@ -64,24 +64,22 @@ ReducerFactory
     .setExpandStateMode("InheritState")
     // [] results in any[] and is valid by mistake
     .addReducer(createVoid1Action, (s, a) => [])
+    .addReducer(createVoid1Action, (s, a) => [])
     // So becomes any array valid
     .toReducer([2]);
 
-    // |-> Temporary solution / Error intended
-    ReducerFactory
-        .create()
-        .extendUnknownState<string[]>()
-        .setExpandStateMode("RetainState")
-        // [] results in any[] and is valid by mistake
-        .addReducer(createVoid1Action, (s, a) => [])
-        // So becomes any array valid
-        .toReducer([2]);
+// Solution #1 / Error intended
+ReducerFactory
+    .create()
+    .extendUnknownState<string[]>()
+    // We retain our state in the *next* function
+    .addReducer([createVoid1Action, "RetainState"], (s, a) => [])
+    .toReducer([true]);
 
-        // No error intended
-        ReducerFactory
-            .create()
-            .extendUnknownState<string[]>()
-            // [] results in any[] and is valid by mistake
-            .addReducer(createVoid1Action, (s, a) => [])
-            // So becomes any array valid
-            .toReducer([2]);
+// Solution #2 / Error intended
+ReducerFactory
+    .create()
+    .extendUnknownState<string[]>()
+    // We retain our state in the *next* function
+    .addReducer(createVoid1Action, (s, a) => <typeof s>[])
+    .toReducer([true]);
