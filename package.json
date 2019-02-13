@@ -38,7 +38,6 @@
     "@babel/core": "^7.2.2",
     "@babel/preset-env": "^7.2.3",
     "@babel/preset-typescript": "^7.1.0",
-    "@teronis/ts-auto-bind-es6": "~0.0.2",
     "@teronis/ts-definitions": "^0.7.2",
     "@types/redux-actions": "^2.3.1",
     "awesome-typescript-loader": "^5.2.1",
