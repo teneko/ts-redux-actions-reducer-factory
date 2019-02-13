@@ -47,6 +47,7 @@ module.exports = {
     // absolute path to prevent the join of <baseDir> and <out>
     out: path.resolve(__dirname, PackageFile.types),
     removeSource: true,
-    outputAsModuleFolder: true
+    outputAsModuleFolder: true,
+    emitOnNoIncludedFileNotFound: true
   })]
 };

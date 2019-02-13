@@ -58,7 +58,9 @@ import { TodoActions } from 'app/actions/todos';
 import { ReducerFactory } from "../../../../../dist/ts-redux-actions-reducer-factory";
 
 export const todoReducer = ReducerFactory
-  .createWithUnknownState<RootState.TodoState>()
+  .create()
+  .extendUnknownState<RootState.TodoState>()
+  .setExpandStateMode("RetainState")
   .addReducer(TodoActions.addTodo, (state, action) => {
     if (action.payload && action.payload.text) {
       return [
@@ -81,7 +83,7 @@ export const todoReducer = ReducerFactory
       if (!todo || !action || !action.payload) {
         return todo;
       } else {
-        return (todo.id || 0) === action.payload.id ? <typeof todo>{ ...todo, text: action.payload.text } : todo;
+        return (todo.id || 0) === action.payload.id ? { ...todo, text: action.payload.text! } : todo;
       }
     });
   })
@@ -89,7 +91,7 @@ export const todoReducer = ReducerFactory
     return state.map((todo) => todo.id === action.payload ? { ...todo, completed: todo.completed } : todo);
   })
   .addReducer(TodoActions.completeAll, (state) => {
-    return state.map((todo) => (<typeof todo>{ ...todo, completed: true }));
+    return state.map((todo) => ({ ...todo, completed: true }));
   })
   .addReducer(TodoActions.clearCompleted, (state) => {
     return state.filter((todo) => todo.completed === false);
