@@ -11,7 +11,7 @@ module.exports = {
   module: {
     rules: [{
       test: /\.tsx?$/,
-      loader: ["babel-loader", "awesome-typescript-loader"]
+      loader: ["babel-loader", "ts-loader"]
     },
     {
       test: /\.js$/,
@@ -48,6 +48,6 @@ module.exports = {
     out: path.resolve(__dirname, PackageFile.types),
     removeSource: true,
     outputAsModuleFolder: true,
-    emitOnNoIncludedFileNotFound: true
+    emitOnNoIncludedFileNotFound: true,
   })]
 };

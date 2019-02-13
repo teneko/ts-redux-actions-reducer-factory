@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/teroneko/ts-redux-actions-reducer-factory.svg?branch=master)](https://travis-ci.org/teroneko/ts-redux-actions-reducer-factory)
+[![npm version](https://badge.fury.io/js/ts-redux-actions-reducer-factory.svg)](https://badge.fury.io/js/ts-redux-actions-reducer-factory)
+
 # ts-redux-actions-reducer-factory
 A reducer factory that can infer your (initial) state type for lesser boilerplate.
 
