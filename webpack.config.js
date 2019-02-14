@@ -23,7 +23,7 @@ module.exports = {
   output: {
     filename: path.basename(PackageFile.main),
     path: path.resolve(__dirname, path.dirname(PackageFile.main)),
-    library: ["Teronis", "ReduxActions", "ReducerFactory"],
+    library: ["ReduxActions", "ReducerFactory"],
     libraryTarget: "umd",
     umdNamedDefine: true
   },
