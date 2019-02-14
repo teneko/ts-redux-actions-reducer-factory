@@ -1,5 +1,6 @@
 import { Action } from "redux-actions";
-import { ExpandedState, FinalState, IndefinableReducerFactoryExpandStateMode, PartialReducerContext, PreferLocalOverGlobalExpandStateMode, ReducerFactoryBase, ReducerFactoryExpandStateMode, ReducerFactoryReducerInference, ReducerReducerFactoryOptions } from "./ReducerFactoryBase";
+import { ExpandedState, FinalState, IndefinableReducerFactoryExpandStateMode, PartialReducerContext, PreferLocalOverGlobalExpandStateMode, ReducerFactoryExpandStateMode, ReducerFactoryReducerInference } from "./projectTypes";
+import { ReducerFactoryBase, ReducerReducerFactoryOptions } from "./ReducerFactoryBase";
 import { UnionPropsAndTypes } from "./utilityTypes";
 
 export class ReducerFactoryBox<

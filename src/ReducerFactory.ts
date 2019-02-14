@@ -1,115 +1,37 @@
 import { Action, handleActions, Reducer } from "redux-actions";
-import { ActionTypeOrActionCreator, DefaultReducerFactoryExpandStateMode, ExpandedState, ExtendedUnknownState, FinalState, IndefinableReducerFactoryExpandStateMode, PartialReducerContext, PreferLocalOverGlobalExpandStateMode, ReducerFactoryBase, ReducerFactoryExpandStateMode, ReducerFactoryExtendStateMode, ReducerFactoryOptions, ReducerFactoryReducerInference, ReducerReducerFactory } from "./ReducerFactoryBase";
+import { CombinableReducer } from "./combinableReducer";
+import { ActionTypeOrActionCreator, DefaultReducerFactoryExpandStateMode, ExpandedState, ExtendedUnknownState, FinalState, IndefinableReducerFactoryExpandStateMode, PartialReducerContext, PreferLocalOverGlobalExpandStateMode, ReducerFactoryExpandStateMode, ReducerFactoryExtendStateMode, ReducerFactoryReducerInference } from "./projectTypes";
+import { ReducerFactoryBase, ReducerFactoryOptions, ReducerKnownState } from "./ReducerFactoryBase";
 import { ReducerFactoryBox } from "./ReducerFactoryBox";
 import { ReducerFactoryWithKnownState } from "./ReducerFactoryWithKnownState";
-import { CombinableReducer } from "./combinableReducer";
 
-/* UTILITY: TYPES */
-
-// type IfNot2<A, B, NotWhen = never> = If<
-//     Not<Extends<A, NotWhen>>,
-//     A,
-//     B
-// >;
-
-// type IfNot2AndAssign<A, B, Assignment, NotWhen = never> = Extract<IfNot2<A, B, NotWhen>, Assignment>;
-
-// type IfNot3<N, A, B, NotWhen = never> = If<
-//     Not<Extends<N, NotWhen>>,
-//     A,
-//     B
-// >;
-
-// /** Intersect only those types that are related to the same property key of object A and B. This function is only applicable on object types. */
-// type IntersectProps<
-//     A,
-//     B,
-//     _MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>
-//     > = { [K in _MutualKeys extends AnyKeys<A> & AnyKeys<B> ? _MutualKeys : never]: A[K] | B[K] };
-
-// /** Does A have any object in his union? Returns export type of true or false. */
-// type HasExtractableObject<A> = Not<Extends<ExtractObject<A>, never>>;
-
-// type HasExtractableObjectWithoutArray<A> = Not<Extends<ExtractObjectExceptArray<A>, never>>;
-
-// /** Creates an union of any extractable objects. */
-// type UnionExtractableObjects<A, B> = If<
-//     // If A or B has object ..
-//     Or<HasExtractableObject<A>, HasExtractableObject<B>>,
-//     // .. then return the one or the other object
-//     ExtractObject<A> | ExtractObject<B>,
-//     // .. else
-//     {}
-// >;
-
-// /** Combines only those types that are related to the same property key of object A and B and include the remaining keys of object A. */
-// type UnionPropsExcept<
-//     A,
-//     B,
-//     _MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
-//     _LeftKeys extends IfNot3<_MutualKeys, Exclude<AnyKeys<A>, _MutualKeys>, AnyKeys<A>> = IfNot3<_MutualKeys, Exclude<AnyKeys<A>, _MutualKeys>, AnyKeys<A>>,
-//     > = IntersectProps<A, B, _MutualKeys> & Pick<A, _LeftKeys>;
-
-// /** Combines only those types that are related to the same property key of object A and B and include the remaining keys of object A and B. */
-// type UnionProps<
-//     A,
-//     B,
-//     _MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
-//     _LeftKeys extends IfNot3<_MutualKeys, Exclude<AnyKeys<A>, _MutualKeys>, AnyKeys<A>> = IfNot3<_MutualKeys, Exclude<AnyKeys<A>, _MutualKeys>, AnyKeys<A>>,
-//     _RightKeys extends IfNot3<_MutualKeys, Exclude<AnyKeys<B>, _MutualKeys>, AnyKeys<B>> = IfNot3<_MutualKeys, Exclude<AnyKeys<B>, _MutualKeys>, AnyKeys<B>>
-//     > = UnionPropsExcept<A, B, _MutualKeys, _LeftKeys> & Pick<B, _RightKeys>;
-
-// /** Intersect only the primitive types of Object A and Object B. */
-// type IntersectPrimitiveTypes<A, B> = Exclude<A | B, Exclude<A, B> | Exclude<B, A> | object>;
-
-// type IntersectPrimitiveTypesAndArrays<
-//     A, B,
-//     _A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
-//     _B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>,
-//     > = ExcludeObjectExceptArray<Exclude<_A2 | _B2, Exclude<_A2, _B2> | Exclude<_B2, _A2>>>;
-
-// type UnionPrimitiveTypesExcept<A, B> = Exclude<A | B, Exclude<B, A> | object>;
-
-// type UnionPrimitiveTypesAndArraysExcept<
-//     A, B,
-//     _A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
-//     _B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>
-//     > = Exclude<_A2 | _B2, Exclude<_B2, _A2>>;
-
-// /** Create an union of the primitive types of Object A and Object B. */
-// type UnionPrimitiveTypes<A, B> = ExcludeObject<A | B>;
-
-// type UnionPrimitiveTypesAndArrays<A, B> = ExcludeObjectExceptArray<A | B>;
-
-// type PreferPrimitivesOverProps<Props, Primitives> = If<
-//     And<Not<Extends<Primitives, never>>, And<Extends<Props, {}>, Extends<{}, Props>>>,
-//     Primitives,
-//     Props | Primitives
-// >;
-
-// type IntersectPropsAndTypes<
-//     A, B,
-//     > = PreferPrimitivesOverProps<IntersectProps<ExtractObjectExceptArray<A>, ExtractObjectExceptArray<B>>, IntersectPrimitiveTypesAndArrays<A, B>>;
-
-// type UnionPropsAndTypesExcept<
-//     A, B,
-//     > = PreferPrimitivesOverProps<UnionPropsExcept<ExtractObjectExceptArray<A>, ExtractObjectExceptArray<B>>, UnionPrimitiveTypesAndArraysExcept<A, B>>;
-
-// type UnionPropsAndTypes<
-//     A, B,
-//     > = PreferPrimitivesOverProps<UnionProps<ExtractObjectExceptArray<A>, ExtractObjectExceptArray<B>>, UnionPrimitiveTypesAndArrays<A, B>>;
-
-// type PropsAndTypesExcept<A, B> = PreferPrimitivesOverProps<If<
-//     And<HasExtractableObjectWithoutArray<A>, HasExtractableObjectWithoutArray<B>>,
-//     Pick<ExtractObjectExceptArray<A>, Exclude<AnyKeys<ExtractObjectExceptArray<A>>, AnyKeys<ExtractObjectExceptArray<B>>>>,
-//     ExtractObjectExceptArray<A>
-// >, Exclude<ExcludeObjectExceptArray<A>, ExcludeObjectExceptArray<B>>>;
-
-/* UTILITY: TYPES & FUNCTIONS */
-
-
-
-/* PROJECT: TYPES & CLASSES */
+type ReducerReducerFactory<
+    LocalState,
+    LocalPayload,
+    LocalExpandStateMode extends ReducerFactoryExpandStateMode,
+    KnownState,
+    KnownStatePayload,
+    UnknownState,
+    UnknownStatePayload,
+    IsKnownStateKnown extends undefined | null,
+    IsUnknownStateKnown extends undefined | null,
+    ExpandStateMode extends ReducerFactoryExpandStateMode
+    > = ReducerFactory<
+        ReducerKnownState<LocalState, KnownState, IsKnownStateKnown>,
+        KnownStatePayload,
+        ExtendedUnknownState<
+            LocalState,
+            LocalExpandStateMode,
+            KnownState,
+            IsKnownStateKnown,
+            UnknownState,
+            IsUnknownStateKnown
+        >,
+        UnknownStatePayload | LocalPayload,
+        IsKnownStateKnown,
+        null,
+        ExpandStateMode
+    >;
 
 export class ReducerFactory<
     KnownState,
