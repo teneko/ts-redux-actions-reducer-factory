@@ -1,6 +1,6 @@
 {
   "name": "ts-redux-actions-reducer-factory",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A reducer factory that infers contextual types for lesser boilerplate.",
   "main": "dist/ts-redux-actions-reducer-factory.js",
   "source": "src/index.ts",
@@ -43,6 +43,7 @@
     "@types/redux-actions": "^2.3.1",
     "babel-loader": "^8.0.5",
     "chai": "^4.2.0",
+    "circular-dependency-plugin": "^5.0.2",
     "declaration-bundler-webpack-plugin": "^1.0.3",
     "dts-bundle-webpack": "^1.0.2",
     "jsdom": "^12.2.0",

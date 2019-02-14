@@ -8,6 +8,7 @@
         "variable-name": [
             false
         ],
+        "ordered-imports": true,
         "align": false,
         "interface-over-type-literal": false,
         "no-consecutive-blank-lines": [

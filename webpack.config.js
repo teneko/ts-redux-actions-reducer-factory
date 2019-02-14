@@ -3,6 +3,7 @@ const DtsBundlePlugin = require("dts-bundle-webpack");
 const TsConfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 const PackageFile = require("./package.json");
 const nodeExternals = require("webpack-node-externals");
+const CircularDependencyPlugin = require("circular-dependency-plugin");
 
 module.exports = {
   mode: "development",
@@ -39,15 +40,25 @@ module.exports = {
     extensions: ["js", ".ts", ".tsx", "d.ts"],
     // plugins: [new TsConfigPathsPlugin()]
   },
-  plugins: [new DtsBundlePlugin({
-    name: PackageFile.name,
-    main: PackageFile.source,
-    // prevents deleting <baseDir>/**/*.d.ts outside of <baseDir>
-    baseDir: path.dirname(PackageFile.source),
-    // absolute path to prevent the join of <baseDir> and <out>
-    out: path.resolve(__dirname, PackageFile.types),
-    removeSource: true,
-    outputAsModuleFolder: true,
-    emitOnNoIncludedFileNotFound: true,
-  })]
+  plugins: [
+    new DtsBundlePlugin({
+      name: PackageFile.name,
+      main: PackageFile.source,
+      // prevents deleting <baseDir>/**/*.d.ts outside of <baseDir>
+      baseDir: path.dirname(PackageFile.source),
+      // absolute path to prevent the join of <baseDir> and <out>
+      out: path.resolve(__dirname, PackageFile.types),
+      removeSource: true,
+      outputAsModuleFolder: true,
+      emitOnNoIncludedFileNotFound: true,
+    }),
+    new CircularDependencyPlugin({
+      // exclude detection of files based on a RegExp
+      exclude: /a\.js|node_modules/,
+      // add errors to webpack instead of warnings
+      failOnError: false,
+      // set the current working directory for displaying module paths
+      cwd: process.cwd(),
+    })
+  ]
 };

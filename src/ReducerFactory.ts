@@ -1,9 +1,9 @@
 import { Action, handleActions, Reducer } from "redux-actions";
 import { CombinableReducer } from "./combinableReducer";
+import { ReducerFactoryBase, ReducerFactoryWithKnownState } from "./InternalReducerFactory";
 import { ActionTypeOrActionCreator, DefaultReducerFactoryExpandStateMode, ExpandedState, ExtendedUnknownState, FinalState, IndefinableReducerFactoryExpandStateMode, PartialReducerContext, PreferLocalOverGlobalExpandStateMode, ReducerFactoryExpandStateMode, ReducerFactoryExtendStateMode, ReducerFactoryReducerInference } from "./projectTypes";
-import { ReducerFactoryBase, ReducerFactoryOptions, ReducerKnownState } from "./ReducerFactoryBase";
+import { ReducerFactoryOptions, ReducerKnownState } from "./ReducerFactoryBase";
 import { ReducerFactoryBox } from "./ReducerFactoryBox";
-import { ReducerFactoryWithKnownState } from "./ReducerFactoryWithKnownState";
 
 type ReducerReducerFactory<
     LocalState,

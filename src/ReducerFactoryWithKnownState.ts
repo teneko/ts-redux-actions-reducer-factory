@@ -1,4 +1,4 @@
-import { ReducerFactory } from "./ReducerFactory";
+import { ReducerFactory } from "./InternalReducerFactory";
 
 export class ReducerFactoryWithKnownState extends ReducerFactory<{}, {}, {}, {}> {
     public withKnownState<KnownState>(knownState: KnownState) {

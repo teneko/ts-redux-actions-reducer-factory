@@ -1,1 +1,1 @@
-export * from "./ReducerFactory";
+export { ReducerFactory } from "./InternalReducerFactory";
