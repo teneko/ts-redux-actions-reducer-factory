@@ -1,9 +1,8 @@
-import { ExcludeObjectExceptArray, Extends, ExtractObjectExceptArray } from "@teronis/ts-definitions";
-import { ActionFunctions, ReducerMap } from "redux-actions";
+import { Extends } from "@teronis/ts-definitions";
+import { ReducerMap } from "redux-actions";
 import { If } from "typescript-logic";
 import { ExtendedUnknownState, ReducerFactoryExpandStateMode } from "./projectTypes";
-import { ReducerFactory } from "./ReducerFactory";
-import { IfNot2, PreferPrimitivesOverProps, PropsAndTypesExcept, UnionPrimitiveTypesAndArrays, UnionProps, UnionPropsAndTypes, UnionPropsAndTypesExcept, UnionPropsExcept } from "./utilityTypes";
+import { UnionPropsAndTypes, UnionPropsAndTypesExcept } from "./utilityTypes";
 
 export type ReducerFactoryOptions<
     KnownState,

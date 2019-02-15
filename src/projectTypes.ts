@@ -1,6 +1,5 @@
 import { ExcludeObjectExceptArray, Extends, ExtractObjectExceptArray } from "@teronis/ts-definitions";
 import { ActionFunctions } from "redux-actions";
-import { Equal } from "typescript-compare";
 import { If, Or } from "typescript-logic";
 import { IfNot2, PreferPrimitivesOverProps, PropsAndTypesExcept, UnionPrimitiveTypesAndArrays, UnionProps, UnionPropsAndTypes, UnionPropsExcept } from "./utilityTypes";
 

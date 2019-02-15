@@ -1,8 +1,14 @@
 {
     "extends": "tslint:recommended",
     "rulesDirectory": [
-        "src/"
+        "src/",
+        "examples"
     ],
+    "linterOptions": {
+        "exclude": [
+            "examples/todos"
+        ]
+    },
     "rules": {
         "max-line-length": false,
         "variable-name": [
