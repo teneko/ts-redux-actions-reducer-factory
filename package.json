@@ -1,6 +1,6 @@
 {
   "name": "ts-redux-actions-reducer-factory",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A reducer factory that infers contextual types for lesser boilerplate.",
   "main": "dist/ts-redux-actions-reducer-factory.js",
   "source": "src/index.ts",
