@@ -1,0 +1,14 @@
+{
+    "extension": [
+        ".ts",
+        ".tsx"
+    ],
+    "reporter": [
+        "json"
+    ],
+    "include": [
+        "src"
+    ],
+    "all": true,
+    "cache": true
+}

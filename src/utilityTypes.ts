@@ -1,5 +1,8 @@
 import { AnyKeys, ExcludeObject, ExcludeObjectExceptArray, Extends, ExtractObject, ExtractObjectExceptArray } from "@teronis/ts-definitions";
+import { ActionFunctions } from "redux-actions";
 import { And, If, Not, Or } from "typescript-logic";
+
+export type ActionTypeOrActionCreator<Payload> = ActionFunctions<Payload> | string;
 
 export type IfNot2<A, B, NotWhen = never> = If<
     Not<Extends<A, NotWhen>>,
@@ -39,35 +42,35 @@ export type UnionExtractableObjects<A, B> = If<
 export type UnionPropsExcept<
     A,
     B,
-    _MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
-    _LeftKeys extends IfNot3<_MutualKeys, Exclude<AnyKeys<A>, _MutualKeys>, AnyKeys<A>> = IfNot3<_MutualKeys, Exclude<AnyKeys<A>, _MutualKeys>, AnyKeys<A>>,
-    > = IntersectProps<A, B, _MutualKeys> & Pick<A, _LeftKeys>;
+    __MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
+    __LeftKeys extends IfNot3<__MutualKeys, Exclude<AnyKeys<A>, __MutualKeys>, AnyKeys<A>> = IfNot3<__MutualKeys, Exclude<AnyKeys<A>, __MutualKeys>, AnyKeys<A>>,
+    > = IntersectProps<A, B, __MutualKeys> & Pick<A, __LeftKeys>;
 
 /** Combines only those types that are related to the same property key of object A and B and include the remaining keys of object A and B. */
 export type UnionProps<
     A,
     B,
-    _MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
-    _LeftKeys extends IfNot3<_MutualKeys, Exclude<AnyKeys<A>, _MutualKeys>, AnyKeys<A>> = IfNot3<_MutualKeys, Exclude<AnyKeys<A>, _MutualKeys>, AnyKeys<A>>,
-    _RightKeys extends IfNot3<_MutualKeys, Exclude<AnyKeys<B>, _MutualKeys>, AnyKeys<B>> = IfNot3<_MutualKeys, Exclude<AnyKeys<B>, _MutualKeys>, AnyKeys<B>>
-    > = UnionPropsExcept<A, B, _MutualKeys, _LeftKeys> & Pick<B, _RightKeys>;
+    __MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
+    __LeftKeys extends IfNot3<__MutualKeys, Exclude<AnyKeys<A>, __MutualKeys>, AnyKeys<A>> = IfNot3<__MutualKeys, Exclude<AnyKeys<A>, __MutualKeys>, AnyKeys<A>>,
+    __RightKeys extends IfNot3<__MutualKeys, Exclude<AnyKeys<B>, __MutualKeys>, AnyKeys<B>> = IfNot3<__MutualKeys, Exclude<AnyKeys<B>, __MutualKeys>, AnyKeys<B>>
+    > = UnionPropsExcept<A, B, __MutualKeys, __LeftKeys> & Pick<B, __RightKeys>;
 
 /** Intersect only the primitive types of Object A and Object B. */
 export type IntersectPrimitiveTypes<A, B> = Exclude<A | B, Exclude<A, B> | Exclude<B, A> | object>;
 
 export type IntersectPrimitiveTypesAndArrays<
     A, B,
-    _A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
-    _B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>,
-    > = ExcludeObjectExceptArray<Exclude<_A2 | _B2, Exclude<_A2, _B2> | Exclude<_B2, _A2>>>;
+    __A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
+    __B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>,
+    > = ExcludeObjectExceptArray<Exclude<__A2 | __B2, Exclude<__A2, __B2> | Exclude<__B2, __A2>>>;
 
 export type UnionPrimitiveTypesExcept<A, B> = Exclude<A | B, Exclude<B, A> | object>;
 
 export type UnionPrimitiveTypesAndArraysExcept<
     A, B,
-    _A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
-    _B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>
-    > = Exclude<_A2 | _B2, Exclude<_B2, _A2>>;
+    __A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
+    __B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>
+    > = Exclude<__A2 | __B2, Exclude<__B2, __A2>>;
 
 /** Create an union of the primitive types of Object A and Object B. */
 export type UnionPrimitiveTypes<A, B> = ExcludeObject<A | B>;

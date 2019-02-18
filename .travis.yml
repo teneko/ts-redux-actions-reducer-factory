@@ -1,8 +1,14 @@
 language: node_js
+sudo: false
 node_js:
   - "stable"
 cache:
   directories:
     - node_modules
+install:
+  - npm install
 script:
+  - npm run reportCoverage
+deploy:
 after_success:
+  - npm run publishCoverage

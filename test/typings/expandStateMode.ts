@@ -1,5 +1,5 @@
 import { createAction } from "redux-actions";
-import { ReducerFactory } from "../src";
+import { ReducerFactory } from "../../src";
 
 const void1Type = "@@void/1";
 
@@ -64,7 +64,8 @@ ReducerFactory
     // [] results in any[] and is valid by mistake, but thanks to "InheritState"..
     .addReducer(createVoid1Action, (s, a) => [])
     // ..we can not extend previous extended primitive types
-    .toReducer([2]);
+    .acceptUnknownState([2])
+    .toReducer();
 
 // Alternative #1 / Error intended
 ReducerFactory
@@ -72,7 +73,8 @@ ReducerFactory
     .extendUnknownState<string[]>()
     // We retain previous state after this state return for next expansions or initialization
     .addReducer([createVoid1Action, "RetainState"], (s, a) => [])
-    .toReducer([true]);
+    .acceptUnknownState([true])
+    .toReducer();
 
 // Alternative #2 / Error intended
 ReducerFactory
@@ -80,4 +82,5 @@ ReducerFactory
     .extendUnknownState<string[]>()
     // We retain previous state after this state return for next expansions or initialization
     .addReducer(createVoid1Action, (s, a) => [] as typeof s)
-    .toReducer([true]);
+    .acceptUnknownState([true])
+    .toReducer();

@@ -43,14 +43,14 @@ const factory = ReducerFactory
     .addReducer(createBAction, (state, action) => ({
         ...state,
         ...action.payload!,
-    }));
-
-// At the very end, we want the reducer, but are forced to initialize the reducer state.
-const reducer = factory
-    .toReducer({
+    }))
+    .acceptUnknownState({
         a: "I am A by default!",
         b: "I am B by default!",
     });
+
+// At the very end, we want the reducer, but are forced to initialize the reducer state.
+const reducer = factory.toReducer();
 
 const initialState = factory.initialKnownState;
 // { a: "I am A by default!", b: "I am B by default!" }

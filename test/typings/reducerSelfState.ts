@@ -1,5 +1,5 @@
 import { createAction } from "redux-actions";
-import { ReducerFactory } from "../src";
+import { ReducerFactory } from "../../src";
 
 const void1Type = "@@void/1";
 
@@ -11,7 +11,8 @@ ReducerFactory
     .extendUnknownState<{ a: string }>()
     .addReducer(createVoid1Action, (s, a) => s)
     .addReducer(createVoid1Action, () => ({ a: 2 }))
-    .toReducer({});
+    .acceptUnknownState({})
+    .toReducer();
 
 // Error intended
 ReducerFactory
@@ -27,4 +28,5 @@ ReducerFactory
         }
     })
     .addReducer(createVoid1Action, () => ({ a: 2 }))
-    .toReducer({});
+    .acceptUnknownState({})
+    .toReducer();

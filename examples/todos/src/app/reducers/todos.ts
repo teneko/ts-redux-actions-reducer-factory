@@ -1,6 +1,6 @@
 // import { handleActions } from 'redux-actions';
-import { RootState } from './state';
-import { TodoActions } from 'app/actions/todos';
+import { TodoActions } from "app/actions/todos";
+import { RootState } from "./state";
 
 /* BEFORE */
 
@@ -67,9 +67,9 @@ export const todoReducer = ReducerFactory
         {
           id: state.reduce((max, todo) => Math.max(todo.id || 1, max), 0) + 1,
           completed: false,
-          text: action.payload.text
+          text: action.payload.text,
         },
-        ...state
+        ...state,
       ];
     } else {
       return state;
@@ -96,10 +96,11 @@ export const todoReducer = ReducerFactory
   .addReducer(TodoActions.clearCompleted, (state) => {
     return state.filter((todo) => todo.completed === false);
   })
-  .toReducer([
+  .acceptUnknownState([
     {
       id: 1,
-      text: 'Use Redux',
-      completed: false
-    }
-  ]);
+      text: "Use Redux",
+      completed: false,
+    },
+  ])
+  .toReducer();
