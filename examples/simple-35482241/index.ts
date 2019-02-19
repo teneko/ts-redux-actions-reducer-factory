@@ -44,12 +44,15 @@ const factory = ReducerFactory
         ...state,
         ...action.payload!,
     }))
+    /**
+     * Now we have to call `acceptUnknownState` and are forced to initialize the reducer state.
+     */
     .acceptUnknownState({
         a: "I am A by default!",
         b: "I am B by default!",
     });
 
-// At the very end, we want the reducer, but are forced to initialize the reducer state.
+// At the very end, we want the reducer.
 const reducer = factory.toReducer();
 
 const initialState = factory.initialKnownState;
