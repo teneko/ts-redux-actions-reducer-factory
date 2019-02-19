@@ -3,6 +3,10 @@ import { ReducerMap } from "redux-actions";
 import { If, Or } from "typescript-logic";
 import { ActionTypeOrActionCreator, IfNot2, PreferPrimitivesOverProps, PropsAndTypesExcept, UnionPrimitiveTypesAndArrays, UnionProps, UnionPropsAndTypes, UnionPropsAndTypesExcept, UnionPropsExcept } from "./utilityTypes";
 
+export type Known = "known";
+export type Unknown = "unknown";
+export type Knowledge = Known | Unknown;
+
 
 export type ReducerFactoryExtendStateMode = "ExtendState";
 export type ReducerFactoryInheritStateMode = "InheritState";
@@ -46,8 +50,8 @@ export type ReducerFactoryOptions<
     $UnknownState,
     $UnknownStatePayload,
     /* They are needed for inference purposes */
-    $IsKnownStateKnown extends undefined | null,
-    $IsUnknownStateKnown extends undefined | null,
+    $IsKnownStateKnown extends Knowledge,
+    $IsUnknownStateKnown extends Knowledge,
     $ExpandStateMode extends ReducerFactoryExpandStateMode
     > = {
         knownState?: $KnownState;
@@ -58,15 +62,44 @@ export type ReducerFactoryOptions<
 
 
 export type ReducerKnownState<State, $KnownState, $IsKnownStateKnown> = If<
-    Extends<$IsKnownStateKnown, null>,
+    Extends<Known, $IsKnownStateKnown>,
     UnionPropsAndTypesExcept<$KnownState, State>,
     $KnownState
 >;
 
 export type ReducerFactoryReducerInference<Payload, ExpandStateMode extends IndefinableReducerFactoryExpandStateMode> = ActionTypeOrActionCreator<Payload> | [ActionTypeOrActionCreator<Payload>, ExpandStateMode];
 
+
+export type InferableReducerReducerFactory<
+    State,
+    Payload,
+    ExpandStateMode extends ReducerFactoryExpandStateMode,
+    $KnownState,
+    $KnownStatePayload,
+    $UnknownState,
+    $UnknownStatePayload,
+    $IsKnownStateKnown extends Knowledge,
+    $IsUnknownStateKnown extends Knowledge,
+    $ExpandStateMode extends ReducerFactoryExpandStateMode,
+    __KnownState extends ReducerKnownState<State, $KnownState, $IsKnownStateKnown>,
+    __KnownStatePayload extends $KnownStatePayload,
+    __UnknownState extends ExtendedUnknownState<
+        State,
+        ExpandStateMode,
+        $KnownState,
+        $IsKnownStateKnown,
+        $UnknownState,
+        $IsUnknownStateKnown
+    >,
+    __UnknownStatePayload extends $UnknownStatePayload | Payload,
+    __IsKnownStateKnown extends $IsKnownStateKnown,
+    __IsUnknownStateKnown extends Known,
+    __ExpandStateMode extends $ExpandStateMode
+    > = any;
+
+
 export type ReducerFactoryReducedState<State, $KnownState, $IsKnownStateKnown> = If<
-    Extends<$IsKnownStateKnown, null>,
+    Extends<Known, $IsKnownStateKnown>,
     PropsAndTypesExcept<State, $KnownState>,
     State
 >;
@@ -89,7 +122,7 @@ export type ExtendedUnknownState<
     $IsUnknownStateKnown,
     __ReducedState extends ReducerFactoryReducedState<State, $KnownState, $IsKnownStateKnown> = ReducerFactoryReducedState<State, $KnownState, $IsKnownStateKnown>
     > = If<
-        Extends<$IsUnknownStateKnown, null>,
+        Extends<Known, $IsUnknownStateKnown>,
         If< // If LocalState has the *same* type signature like UnknownState, or the retain expand mode is enabled, ..
             Or<Extends<$UnknownState, State>, Extends<ExpandStateMode, ReducerFactoryRetainStateMode>>,
             // .. then we don't want to expand UnknownState, but rather we want to retain the type signature of UnknownState

@@ -1,14 +1,14 @@
 import { Action, handleActions } from "redux-actions";
 import { IPreReducerFactory } from "./IPreReducerFactory";
-import { DefaultReducerFactoryExpandStateMode, IndefinableReducerFactoryExpandStateMode, ReducerContext, ReducerFactoryExpandStateMode, ReducerFactoryOptions, ReducerFactoryReducerInference } from "./projectTypes";
+import { DefaultReducerFactoryExpandStateMode, IndefinableReducerFactoryExpandStateMode, Knowledge, ReducerContext, ReducerFactoryExpandStateMode, ReducerFactoryOptions, ReducerFactoryReducerInference, Unknown } from "./projectTypes";
 
 export class ReducerFactory<
     $KnownState,
     $KnownStatePayload,
     $UnknownState,
     $UnknownStatePayload,
-    $IsKnownStateKnown extends undefined | null = undefined,
-    $IsUnknownStateKnown extends undefined | null = undefined,
+    $IsKnownStateKnown extends Knowledge = Unknown,
+    $IsUnknownStateKnown extends Knowledge = Unknown,
     $ExpandStateMode extends ReducerFactoryExpandStateMode = DefaultReducerFactoryExpandStateMode
     > {
     public static create(): IPreReducerFactory {
@@ -24,8 +24,8 @@ export class ReducerFactory<
         _KnownStatePayload,
         _UnknownState,
         _UnknownStatePayload,
-        _IsKnownStateKnown extends undefined | null,
-        _IsUnknownStateKnown extends undefined | null,
+        _IsKnownStateKnown extends Knowledge,
+        _IsUnknownStateKnown extends Knowledge,
         _ExpandStateMode extends ReducerFactoryExpandStateMode
     >(options: ReducerFactoryOptions<
         _KnownState,
@@ -40,7 +40,7 @@ export class ReducerFactory<
         options.unknownReducerMap = options.unknownReducerMap || {};
     }
 
-    private static getInitialOptions(): Pick<ReducerFactoryOptions<{}, {}, {}, {}, null, null, DefaultReducerFactoryExpandStateMode>, "expandStateMode"> {
+    private static getInitialOptions(): Pick<ReducerFactoryOptions<{}, {}, {}, {}, Unknown, Unknown, DefaultReducerFactoryExpandStateMode>, "expandStateMode"> {
         return { expandStateMode: "ExtendState" };
     }
 
@@ -72,8 +72,8 @@ export class ReducerFactory<
         _KnownStatePayload,
         _UnknownState,
         _UnknownStatePayload,
-        _IsKnownStateKnown extends undefined | null,
-        _IsUnknownStateKnown extends undefined | null,
+        _IsKnownStateKnown extends Knowledge,
+        _IsUnknownStateKnown extends Knowledge,
         _ExpandStateMode extends ReducerFactoryExpandStateMode
     >(options: Partial<ReducerFactoryOptions<
         _KnownState,

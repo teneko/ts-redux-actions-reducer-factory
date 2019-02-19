@@ -1,4 +1,4 @@
-import { ReducerFactoryExpandStateMode } from "./projectTypes";
+import { Knowledge, ReducerFactoryExpandStateMode } from "./projectTypes";
 import { UnionPropsAndTypes } from "./utilityTypes";
 
 export interface IReducerFactoryBase<
@@ -6,8 +6,8 @@ export interface IReducerFactoryBase<
     $KnownStatePayload,
     $UnknownState,
     $UnknownStatePayload,
-    $IsKnownStateKnown extends undefined | null,
-    $IsUnknownStateKnown extends undefined | null,
+    $IsKnownStateKnown extends Knowledge,
+    $IsUnknownStateKnown extends Knowledge,
     $ExpandStateMode extends ReducerFactoryExpandStateMode
     > {
     /** Get the initial known state you innitialized with `acceptUnknownState` or `withKnownState`. */

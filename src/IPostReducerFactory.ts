@@ -1,7 +1,7 @@
 import { Reducer } from "redux-actions";
 import { UndefinifiedStateReducer } from "./combinableReducer";
 import { IReducerFactoryBase } from "./IReducerFactoryBase";
-import { FinalState, ReducerFactoryExpandStateMode } from "./projectTypes";
+import { FinalState, Knowledge, ReducerFactoryExpandStateMode } from "./projectTypes";
 
 export type UndefinifiedStateReducerString = "undefinifiedState";
 
@@ -10,8 +10,8 @@ export interface IPostReducerFactory<
     $KnownStatePayload,
     $UnknownState,
     $UnknownStatePayload,
-    $IsKnownStateKnown extends undefined | null,
-    $IsUnknownStateKnown extends undefined | null,
+    $IsKnownStateKnown extends Knowledge,
+    $IsUnknownStateKnown extends Knowledge,
     $ExpandStateMode extends ReducerFactoryExpandStateMode
     > extends IReducerFactoryBase<
     $KnownState,

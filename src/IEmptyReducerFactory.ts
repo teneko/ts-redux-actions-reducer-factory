@@ -1,4 +1,4 @@
-import { ExtendedUnknownState, ReducerFactoryExpandStateMode, ReducerKnownState } from "./projectTypes";
+import { ExtendedUnknownState, InferableReducerReducerFactory, Knowledge, Known, ReducerFactoryExpandStateMode, ReducerKnownState } from "./projectTypes";
 
 // tslint:disable-next-line: no-empty-interface
 export interface IEmptyReducerFactory<
@@ -6,13 +6,52 @@ export interface IEmptyReducerFactory<
     $KnownStatePayload,
     $UnknownState,
     $UnknownStatePayload,
-    /* They are needed for inference purposes */
-    $IsKnownStateKnown extends undefined | null,
-    $IsUnknownStateKnown extends undefined | null,
+    $IsKnownStateKnown extends Knowledge,
+    $IsUnknownStateKnown extends Knowledge,
     $ExpandStateMode extends ReducerFactoryExpandStateMode
     > { }
 
-export type EmptyReducerFactory<
+// too hard lagging
+// export type ReducerIEmptyReducerFactory<
+//     State,
+//     Payload,
+//     ExpandStateMode extends ReducerFactoryExpandStateMode,
+//     $KnownState,
+//     $KnownStatePayload,
+//     $UnknownState,
+//     $UnknownStatePayload,
+//     $IsKnownStateKnown extends Knowledge,
+//     $IsUnknownStateKnown extends Knowledge,
+//     $ExpandStateMode extends ReducerFactoryExpandStateMode
+//     > = never extends InferableReducerReducerFactory<
+//         State,
+//         Payload,
+//         ExpandStateMode,
+//         $KnownState,
+//         $KnownStatePayload,
+//         $UnknownState,
+//         $UnknownStatePayload,
+//         $IsKnownStateKnown,
+//         $IsUnknownStateKnown,
+//         $ExpandStateMode,
+//         infer __KnownState,
+//         infer __KnownStatePayload,
+//         infer __UnknownState,
+//         infer __UnknownStatePayload,
+//         infer __IsKnownStateKnown,
+//         infer __IsUnknownStateKnown,
+//         infer __ExpandStateMode
+//     > ? IEmptyReducerFactory<
+//         __KnownState,
+//         __KnownStatePayload,
+//         __UnknownState,
+//         __UnknownStatePayload,
+//         __IsKnownStateKnown,
+//         __IsUnknownStateKnown,
+//         __ExpandStateMode
+//     > : never;
+
+export type ReducerIEmptyReducerFactory<
     State,
     Payload,
     ExpandStateMode extends ReducerFactoryExpandStateMode,
@@ -20,8 +59,8 @@ export type EmptyReducerFactory<
     $KnownStatePayload,
     $UnknownState,
     $UnknownStatePayload,
-    $IsKnownStateKnown extends undefined | null,
-    $IsUnknownStateKnown extends undefined | null,
+    $IsKnownStateKnown extends Knowledge,
+    $IsUnknownStateKnown extends Knowledge,
     $ExpandStateMode extends ReducerFactoryExpandStateMode
     > = IEmptyReducerFactory<
         ReducerKnownState<State, $KnownState, $IsKnownStateKnown>,
@@ -36,5 +75,6 @@ export type EmptyReducerFactory<
         >,
         $UnknownStatePayload | Payload,
         $IsKnownStateKnown,
-        null,
-        $ExpandStateMode>;
+        Known,
+        $ExpandStateMode
+    >;

@@ -1,15 +1,15 @@
 import { Action } from "redux-actions";
-import { EmptyReducerFactory } from "./IEmptyReducerFactory";
+import { ReducerIEmptyReducerFactory } from "./IEmptyReducerFactory";
 import { IReducerFactoryBase } from "./IReducerFactoryBase";
-import { ExpandedState, FinalState, IndefinableReducerFactoryExpandStateMode, Prefer$OverExpandStateMode, ReducerContext, ReducerFactoryExpandStateMode, ReducerFactoryReducerInference } from "./projectTypes";
+import { ExpandedState, FinalState, IndefinableReducerFactoryExpandStateMode, Knowledge, Prefer$OverExpandStateMode, ReducerContext, ReducerFactoryExpandStateMode, ReducerFactoryReducerInference } from "./projectTypes";
 
 export interface IReducerFactoryBox<
     $KnownState,
     $KnownStatePayload,
     $UnknownState,
     $UnknownStatePayload,
-    $IsKnownStateKnown extends undefined | null,
-    $IsUnknownStateKnown extends undefined | null,
+    $IsKnownStateKnown extends Knowledge,
+    $IsUnknownStateKnown extends Knowledge,
     $ExpandStateMode extends ReducerFactoryExpandStateMode
     > extends IReducerFactoryBase<
     $KnownState,
@@ -29,7 +29,7 @@ export interface IReducerFactoryBox<
                 Prefer$OverExpandStateMode<$ExpandStateMode, _ExpandStateMode>,
                 $KnownState,
                 $UnknownState>,
-    ): EmptyReducerFactory<
+    ): ReducerIEmptyReducerFactory<
         _State,
         _Payload,
         Prefer$OverExpandStateMode<$ExpandStateMode, _ExpandStateMode>,
@@ -48,7 +48,7 @@ export interface IReducerFactoryBox<
             Prefer$OverExpandStateMode<$ExpandStateMode, _ExpandStateMode>,
             $KnownState,
             $UnknownState>,
-    ): EmptyReducerFactory<
+    ): ReducerIEmptyReducerFactory<
         _State,
         _Payload,
         Prefer$OverExpandStateMode<$ExpandStateMode, _ExpandStateMode>,

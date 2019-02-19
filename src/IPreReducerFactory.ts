@@ -1,13 +1,13 @@
 import { IReducerFactory } from "./IReducerFactory";
-import { DefaultReducerFactoryExpandStateMode } from "./projectTypes";
+import { DefaultReducerFactoryExpandStateMode, Known, Unknown } from "./projectTypes";
 
 export interface IPreReducerFactory extends IReducerFactory<
     {},
     {},
     {},
     {},
-    null,
-    null,
+    Unknown,
+    Unknown,
     DefaultReducerFactoryExpandStateMode
     > {
     withKnownState<KnownState>(knownState: KnownState): IReducerFactory<
@@ -15,8 +15,8 @@ export interface IPreReducerFactory extends IReducerFactory<
         {},
         {},
         {},
-        null,
-        null,
+        Known,
+        Unknown,
         DefaultReducerFactoryExpandStateMode
     >;
 }
