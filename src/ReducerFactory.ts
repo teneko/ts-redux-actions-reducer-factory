@@ -109,9 +109,9 @@ export class ReducerFactory<
         return callback(this);
     }
 
-    public addReducer<_Payload, _ExpandStateMode extends IndefinableReducerFactoryExpandStateMode = undefined>(
-        inference: ReducerFactoryReducerInference<_Payload, _ExpandStateMode>,
-        reducer: (this: ReducerContext<$KnownState, $UnknownState>, state: any, action: Action<_Payload>) => any) {
+    public addReducer<_InterPayload, _InterExpandStateMode extends IndefinableReducerFactoryExpandStateMode = undefined>(
+        inference: ReducerFactoryReducerInference<_InterPayload, _InterExpandStateMode>,
+        reducer: (this: ReducerContext<$KnownState, $UnknownState>, state: any, action: Action<_InterPayload>) => any) {
         reducer = reducer.bind({
             initialKnownState: this.initialKnownState,
         });

@@ -16,30 +16,33 @@ export type ReducerFactoryExpandStateMode = ReducerFactoryExtendStateMode | Redu
 export type DefaultReducerFactoryExpandStateMode = ReducerFactoryExtendStateMode;
 export type IndefinableReducerFactoryExpandStateMode = ReducerFactoryExpandStateMode | undefined;
 
-export type Prefer$OverExpandStateMode<$ExpandStateMode extends ReducerFactoryExpandStateMode, ExpandStateMode extends IndefinableReducerFactoryExpandStateMode> =
-    ExpandStateMode extends undefined ? $ExpandStateMode : ExpandStateMode;
+export type Prefer$OverExpandStateMode<$ExpandStateMode extends ReducerFactoryExpandStateMode, InterExpandStateMode extends IndefinableReducerFactoryExpandStateMode> =
+    InterExpandStateMode extends undefined ? $ExpandStateMode : InterExpandStateMode;
 
-
-export type InheritedState<State, $KnownState, $UnknownState> = IfNot2<UnionPrimitiveTypesAndArrays<$KnownState, $UnknownState>, ExcludeObjectExceptArray<State>> |
-    (ExtractObjectExceptArray<State> &
+/** Only for view, not calulcating. */
+export type InheritedInterState<InterState, $KnownState, $UnknownState> = IfNot2<UnionPrimitiveTypesAndArrays<$KnownState, $UnknownState>, ExcludeObjectExceptArray<InterState>> |
+    (ExtractObjectExceptArray<InterState> &
         ExtractObjectExceptArray<$KnownState> &
         ExtractObjectExceptArray<$UnknownState>);
 
-export type ExtendedState<State, $KnownState, $UnknownState> = ExcludeObjectExceptArray<State> | ExcludeObjectExceptArray<$KnownState> | ExcludeObjectExceptArray<$UnknownState> |
-    (ExtractObjectExceptArray<State> &
-        UnionPropsExcept<ExtractObjectExceptArray<$KnownState>, ExtractObjectExceptArray<State>> &
-        UnionPropsExcept<ExtractObjectExceptArray<$UnknownState>, ExtractObjectExceptArray<State>>);
+/** Only for view, not calulcating. */
+export type ExtendedInterState<InterState, $KnownState, $UnknownState> = ExcludeObjectExceptArray<InterState> | ExcludeObjectExceptArray<$KnownState> | ExcludeObjectExceptArray<$UnknownState> |
+    (ExtractObjectExceptArray<InterState> &
+        UnionPropsExcept<ExtractObjectExceptArray<$KnownState>, ExtractObjectExceptArray<InterState>> &
+        UnionPropsExcept<ExtractObjectExceptArray<$UnknownState>, ExtractObjectExceptArray<InterState>>);
 
-export type RetainedState<$KnownState, $UnknownState> = UnionPrimitiveTypesAndArrays<$KnownState, $UnknownState> |
+/** Only for view, not calulcating. */
+export type RetainedInterState<$KnownState, $UnknownState> = UnionPrimitiveTypesAndArrays<$KnownState, $UnknownState> |
     (FinalState<$KnownState, $UnknownState>);
 
-export type ExpandedState<State, ExpandStateMode extends ReducerFactoryExpandStateMode, $KnownState, $UnknownState> = If<
-    Extends<ExpandStateMode, ReducerFactoryInheritStateMode>,
-    InheritedState<State, $KnownState, $UnknownState>,
+/** Only for view, not calulcating. */
+export type ExpandedInterState<InterState, PreferredExpandStateMode extends ReducerFactoryExpandStateMode, $KnownState, $UnknownState> = If<
+    Extends<PreferredExpandStateMode, ReducerFactoryInheritStateMode>,
+    InheritedInterState<InterState, $KnownState, $UnknownState>,
     If<
-        Extends<ExpandStateMode, ReducerFactoryRetainStateMode>,
-        RetainedState<$KnownState, $UnknownState>,
-        ExtendedState<State, $KnownState, $UnknownState>
+        Extends<PreferredExpandStateMode, ReducerFactoryRetainStateMode>,
+        RetainedInterState<$KnownState, $UnknownState>,
+        ExtendedInterState<InterState, $KnownState, $UnknownState>
     >
 >;
 
@@ -60,46 +63,47 @@ export type ReducerFactoryOptions<
         expandStateMode: $ExpandStateMode;
     };
 
-
-export type ReducerKnownState<State, $KnownState, $IsKnownStateKnown> = If<
-    Extends<Known, $IsKnownStateKnown>,
-    UnionPropsAndTypesExcept<$KnownState, State>,
+/** Used in the return type of any reducer addition. It exclude InterState from $KnownState. */
+export type ReducerFactoryReducedKnownState<InterState, $KnownState, $IsKnownStateKnown> = If<
+    Extends<$IsKnownStateKnown, Known>,
+    UnionPropsAndTypesExcept<$KnownState, InterState>,
     $KnownState
 >;
 
-export type ReducerFactoryReducerInference<Payload, ExpandStateMode extends IndefinableReducerFactoryExpandStateMode> = ActionTypeOrActionCreator<Payload> | [ActionTypeOrActionCreator<Payload>, ExpandStateMode];
+export type ReducerFactoryReducerInference<InterPayload, InterExpandStateMode extends IndefinableReducerFactoryExpandStateMode> = ActionTypeOrActionCreator<InterPayload> | [ActionTypeOrActionCreator<InterPayload>, InterExpandStateMode];
 
 
-export type InferableReducerReducerFactory<
-    State,
-    Payload,
-    ExpandStateMode extends ReducerFactoryExpandStateMode,
-    $KnownState,
-    $KnownStatePayload,
-    $UnknownState,
-    $UnknownStatePayload,
-    $IsKnownStateKnown extends Knowledge,
-    $IsUnknownStateKnown extends Knowledge,
-    $ExpandStateMode extends ReducerFactoryExpandStateMode,
-    __KnownState extends ReducerKnownState<State, $KnownState, $IsKnownStateKnown>,
-    __KnownStatePayload extends $KnownStatePayload,
-    __UnknownState extends ExtendedUnknownState<
-        State,
-        ExpandStateMode,
-        $KnownState,
-        $IsKnownStateKnown,
-        $UnknownState,
-        $IsUnknownStateKnown
-    >,
-    __UnknownStatePayload extends $UnknownStatePayload | Payload,
-    __IsKnownStateKnown extends $IsKnownStateKnown,
-    __IsUnknownStateKnown extends Known,
-    __ExpandStateMode extends $ExpandStateMode
-    > = any;
+// too hard lagging
+// export type InferableReducerReducerFactory<
+//     State,
+//     Payload,
+//     ExpandStateMode extends ReducerFactoryExpandStateMode,
+//     $KnownState,
+//     $KnownStatePayload,
+//     $UnknownState,
+//     $UnknownStatePayload,
+//     $IsKnownStateKnown extends Knowledge,
+//     $IsUnknownStateKnown extends Knowledge,
+//     $ExpandStateMode extends ReducerFactoryExpandStateMode,
+//     __KnownState extends ReducerKnownState<State, $KnownState, $IsKnownStateKnown>,
+//     __KnownStatePayload extends $KnownStatePayload,
+//     __UnknownState extends ExtendedUnknownState<
+//         State,
+//         ExpandStateMode,
+//         $KnownState,
+//         $IsKnownStateKnown,
+//         $UnknownState,
+//         $IsUnknownStateKnown
+//     >,
+//     __UnknownStatePayload extends $UnknownStatePayload | Payload,
+//     __IsKnownStateKnown extends $IsKnownStateKnown,
+//     __IsUnknownStateKnown extends Known,
+//     __ExpandStateMode extends $ExpandStateMode
+//     > = any;
 
 
 export type ReducerFactoryReducedState<State, $KnownState, $IsKnownStateKnown> = If<
-    Extends<Known, $IsKnownStateKnown>,
+    Extends<$IsKnownStateKnown, Known>,
     PropsAndTypesExcept<State, $KnownState>,
     State
 >;
@@ -113,29 +117,34 @@ export type InheritedStateUnionPropsAndTypes<State, $KnownState, $UnknownState> 
     IfNot2<UnionPrimitiveTypesAndArrays<$KnownState, $UnknownState>, ExcludeObjectExceptArray<State>>
 >;
 
-export type ExtendedUnknownState<
-    State,
-    ExpandStateMode extends ReducerFactoryExpandStateMode,
+/** Whenever you need to expand unknown state, you would need it. */
+export type ReducerFactoryExpandedUnknownState<
+    InterState,
+    PreferredExpandStateMode extends ReducerFactoryExpandStateMode,
     $KnownState,
     $IsKnownStateKnown,
     $UnknownState,
     $IsUnknownStateKnown,
-    __ReducedState extends ReducerFactoryReducedState<State, $KnownState, $IsKnownStateKnown> = ReducerFactoryReducedState<State, $KnownState, $IsKnownStateKnown>
-    > = If<
-        Extends<Known, $IsUnknownStateKnown>,
-        If< // If LocalState has the *same* type signature like UnknownState, or the retain expand mode is enabled, ..
-            Or<Extends<$UnknownState, State>, Extends<ExpandStateMode, ReducerFactoryRetainStateMode>>,
-            // .. then we don't want to expand UnknownState, but rather we want to retain the type signature of UnknownState
-            $UnknownState,
-            If<
-                Extends<ExpandStateMode, ReducerFactoryInheritStateMode>,
-                InheritedStateUnionPropsAndTypes<__ReducedState, $KnownState, $UnknownState>,
-                UnionPropsAndTypes<$UnknownState, __ReducedState>
-            >
-        >,
-        __ReducedState
-    >;
+    __ReducedState extends ReducerFactoryReducedState<InterState, $KnownState, $IsKnownStateKnown> = ReducerFactoryReducedState<InterState, $KnownState, $IsKnownStateKnown>
+    > = (
+        If< // If $IsUnknownStateKnown is equals Known, ..
+            Extends<$IsUnknownStateKnown, Known>,
+            If< // If $UnknownState has the *same* type signature like State, or the retain expand mode is enabled, ..
+                Or<Extends<$UnknownState, InterState>, Extends<PreferredExpandStateMode, ReducerFactoryRetainStateMode>>,
+                // .. then we don't want to expand UnknownState, but rather we want to retain the type signature of UnknownState
+                $UnknownState,
+                If<
+                    Extends<PreferredExpandStateMode, ReducerFactoryInheritStateMode>,
+                    InheritedStateUnionPropsAndTypes<__ReducedState, $KnownState, $UnknownState>,
+                    // If else we want to *extend* $UnknownState
+                    UnionPropsAndTypes<$UnknownState, __ReducedState>
+                >
+            >,
+            __ReducedState
+        >
+    );
 
+/** This represents the final state type. DO NOT use it for intermediate type calculation. */
 export type FinalState<$KnownState, $UnknownState> = UnionPropsAndTypes<$KnownState, $UnknownState>;
 
 export type ReducerContext<$KnownState, $UnknownState> = {

@@ -4,7 +4,7 @@ import { IEmptyReducerFactory } from "./IEmptyReducerFactory";
 import { IPostReducerFactory } from "./IPostReducerFactory";
 import { IReducerFactoryBase } from "./IReducerFactoryBase";
 import { IReducerFactoryBox } from "./IReducerFactoryBox";
-import { ExpandedState, ExtendedUnknownState, FinalState, IndefinableReducerFactoryExpandStateMode, InferableReducerReducerFactory, Knowledge, Known, Prefer$OverExpandStateMode, ReducerContext, ReducerFactoryExpandStateMode, ReducerFactoryExtendStateMode, ReducerFactoryReducerInference, ReducerKnownState, Unknown } from "./projectTypes";
+import { ExpandedInterState, ReducerFactoryExpandedUnknownState, FinalState, IndefinableReducerFactoryExpandStateMode, Knowledge, Known, Prefer$OverExpandStateMode as Prefer$OverInterExpandStateMode, ReducerContext, ReducerFactoryExpandStateMode, ReducerFactoryExtendStateMode, ReducerFactoryReducerInference, ReducerFactoryReducedKnownState, Unknown } from "./projectTypes";
 import { UnionPropsAndTypes } from "./utilityTypes";
 
 export interface IReducerFactory<
@@ -36,12 +36,13 @@ export interface IReducerFactory<
         _ExpandStateMode
     >;
 
-    extendUnknownState<State, _ExpandStateMode extends ReducerFactoryExpandStateMode = ReducerFactoryExtendStateMode>(): IReducerFactory<
+    // TODO: Look for _ExpandStateMode --> _InterExpandStateMode (Prefer$Over...)
+    extendUnknownState<InterState, _InterExpandStateMode extends ReducerFactoryExpandStateMode = ReducerFactoryExtendStateMode>(): IReducerFactory<
         $KnownState,
         $KnownStatePayload,
-        ExtendedUnknownState<
-            State,
-            _ExpandStateMode,
+        ReducerFactoryExpandedUnknownState<
+            InterState,
+            _InterExpandStateMode,
             $KnownState,
             $IsKnownStateKnown,
             $UnknownState,
@@ -94,20 +95,20 @@ export interface IReducerFactory<
         _ExpandStateMode
     >;
 
-    addReducer<_State, _Payload, _ExpandStateMode extends IndefinableReducerFactoryExpandStateMode = undefined>(
-        inference: ReducerFactoryReducerInference<_Payload, _ExpandStateMode>,
+    addReducer<_InterState, _InterPayload, _InterExpandStateMode extends IndefinableReducerFactoryExpandStateMode = undefined>(
+        inference: ReducerFactoryReducerInference<_InterPayload, _InterExpandStateMode>,
         reducer: (
             this: ReducerContext<$KnownState, $UnknownState>,
             state: FinalState<$KnownState, $UnknownState>,
-            action: Action<_Payload>) => ExpandedState<
-                _State,
-                Prefer$OverExpandStateMode<$ExpandStateMode, _ExpandStateMode>,
+            action: Action<_InterPayload>) => ExpandedInterState<
+                _InterState,
+                Prefer$OverInterExpandStateMode<$ExpandStateMode, _InterExpandStateMode>,
                 $KnownState,
                 $UnknownState>,
     ): ReducerIReducerFactory<
-        _State,
-        _Payload,
-        Prefer$OverExpandStateMode<$ExpandStateMode, _ExpandStateMode>,
+        _InterState,
+        _InterPayload,
+        Prefer$OverInterExpandStateMode<$ExpandStateMode, _InterExpandStateMode>,
         $KnownState,
         $KnownStatePayload,
         $UnknownState,
@@ -117,18 +118,18 @@ export interface IReducerFactory<
         $ExpandStateMode
     >;
 
-    addPayloadReducer<_State, _Payload, _ExpandStateMode extends IndefinableReducerFactoryExpandStateMode = undefined>(
-        inference: ReducerFactoryReducerInference<_Payload, _ExpandStateMode>,
-        actionReducer: (this: ReducerContext<$KnownState, $UnknownState>, action: Action<_Payload>) =>
-            ExpandedState<
-                _State,
-                Prefer$OverExpandStateMode<$ExpandStateMode, _ExpandStateMode>,
+    addPayloadReducer<_InterState, _InterPayload, _InterExpandStateMode extends IndefinableReducerFactoryExpandStateMode = undefined>(
+        inference: ReducerFactoryReducerInference<_InterPayload, _InterExpandStateMode>,
+        actionReducer: (this: ReducerContext<$KnownState, $UnknownState>, action: Action<_InterPayload>) =>
+            ExpandedInterState<
+                _InterState,
+                Prefer$OverInterExpandStateMode<$ExpandStateMode, _InterExpandStateMode>,
                 $KnownState,
                 $UnknownState>,
     ): ReducerIReducerFactory<
-        _State,
-        _Payload,
-        Prefer$OverExpandStateMode<$ExpandStateMode, _ExpandStateMode>,
+        _InterState,
+        _InterPayload,
+        Prefer$OverInterExpandStateMode<$ExpandStateMode, _InterExpandStateMode>,
         $KnownState,
         $KnownStatePayload,
         $UnknownState,
@@ -151,9 +152,9 @@ export interface IReducerFactory<
 
 // // too hard lagging
 // export type ReducerIReducerFactory<
-//     State,
-//     Payload,
-//     ExpandStateMode extends ReducerFactoryExpandStateMode,
+//     InterState,
+//     InterPayload,
+//     InterExpandStateMode extends ReducerFactoryExpandStateMode,
 //     $KnownState,
 //     $KnownStatePayload,
 //     $UnknownState,
@@ -162,9 +163,9 @@ export interface IReducerFactory<
 //     $IsUnknownStateKnown extends Knowledge,
 //     $ExpandStateMode extends ReducerFactoryExpandStateMode
 //     > = never extends InferableReducerReducerFactory<
-//         State,
-//         Payload,
-//         ExpandStateMode,
+//         InterState,
+//         InterPayload,
+//         InterExpandStateMode,
 //         $KnownState,
 //         $KnownStatePayload,
 //         $UnknownState,
@@ -190,9 +191,9 @@ export interface IReducerFactory<
 //     > : never;
 
 export type ReducerIReducerFactory<
-    State,
-    Payload,
-    ExpandStateMode extends ReducerFactoryExpandStateMode,
+    InterState,
+    InterPayload,
+    PreferredExpandStateMode extends ReducerFactoryExpandStateMode,
     $KnownState,
     $KnownStatePayload,
     $UnknownState,
@@ -201,17 +202,17 @@ export type ReducerIReducerFactory<
     $IsUnknownStateKnown extends Knowledge,
     $ExpandStateMode extends ReducerFactoryExpandStateMode
     > = IReducerFactory<
-        ReducerKnownState<State, $KnownState, $IsKnownStateKnown>,
+        ReducerFactoryReducedKnownState<InterState, $KnownState, $IsKnownStateKnown>,
         $KnownStatePayload,
-        ExtendedUnknownState<
-            State,
-            ExpandStateMode,
+        ReducerFactoryExpandedUnknownState<
+            InterState,
+            PreferredExpandStateMode,
             $KnownState,
             $IsKnownStateKnown,
             $UnknownState,
             $IsUnknownStateKnown
         >,
-        $UnknownStatePayload | Payload,
+        $UnknownStatePayload | InterPayload,
         $IsKnownStateKnown,
         Known,
         $ExpandStateMode

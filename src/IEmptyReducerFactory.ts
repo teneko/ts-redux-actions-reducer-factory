@@ -1,4 +1,4 @@
-import { ExtendedUnknownState, InferableReducerReducerFactory, Knowledge, Known, ReducerFactoryExpandStateMode, ReducerKnownState } from "./projectTypes";
+import { ReducerFactoryExpandedUnknownState, Knowledge, Known, ReducerFactoryExpandStateMode, ReducerFactoryReducedKnownState } from "./projectTypes";
 
 // tslint:disable-next-line: no-empty-interface
 export interface IEmptyReducerFactory<
@@ -13,7 +13,7 @@ export interface IEmptyReducerFactory<
 
 // too hard lagging
 // export type ReducerIEmptyReducerFactory<
-//     State,
+//     InterState,
 //     Payload,
 //     ExpandStateMode extends ReducerFactoryExpandStateMode,
 //     $KnownState,
@@ -24,7 +24,7 @@ export interface IEmptyReducerFactory<
 //     $IsUnknownStateKnown extends Knowledge,
 //     $ExpandStateMode extends ReducerFactoryExpandStateMode
 //     > = never extends InferableReducerReducerFactory<
-//         State,
+//         InterState,
 //         Payload,
 //         ExpandStateMode,
 //         $KnownState,
@@ -52,9 +52,9 @@ export interface IEmptyReducerFactory<
 //     > : never;
 
 export type ReducerIEmptyReducerFactory<
-    State,
-    Payload,
-    ExpandStateMode extends ReducerFactoryExpandStateMode,
+    InterState,
+    InterPayload,
+    PreferredExpandStateMode extends ReducerFactoryExpandStateMode,
     $KnownState,
     $KnownStatePayload,
     $UnknownState,
@@ -63,17 +63,17 @@ export type ReducerIEmptyReducerFactory<
     $IsUnknownStateKnown extends Knowledge,
     $ExpandStateMode extends ReducerFactoryExpandStateMode
     > = IEmptyReducerFactory<
-        ReducerKnownState<State, $KnownState, $IsKnownStateKnown>,
+        ReducerFactoryReducedKnownState<InterState, $KnownState, $IsKnownStateKnown>,
         $KnownStatePayload,
-        ExtendedUnknownState<
-            State,
-            ExpandStateMode,
+        ReducerFactoryExpandedUnknownState<
+            InterState,
+            PreferredExpandStateMode,
             $KnownState,
             $IsKnownStateKnown,
             $UnknownState,
             $IsUnknownStateKnown
         >,
-        $UnknownStatePayload | Payload,
+        $UnknownStatePayload | InterPayload,
         $IsKnownStateKnown,
         Known,
         $ExpandStateMode
