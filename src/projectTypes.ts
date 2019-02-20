@@ -1,7 +1,7 @@
 import { ExcludeObjectExceptArray, Extends, ExtractObjectExceptArray } from "@teronis/ts-definitions";
 import { ReducerMap } from "redux-actions";
 import { If, Or } from "typescript-logic";
-import { ActionTypeOrActionCreator, IfNot2, PreferPrimitivesOverProps, PropsAndTypesExcept, UnionPrimitiveTypesAndArrays, UnionProps, UnionPropsAndTypes, UnionPropsAndTypesExcept, UnionPropsExcept } from "./utilityTypes";
+import { ActionTypeOrActionCreator, IfNot2, PreferPrimitivesOverEmptyProps, PropsAndTypesExcept, UnionPrimitiveTypesAndArrays, UnionProps, UnionPropsAndTypes, UnionPropsAndTypesExcept, UnionPropsExcept } from "./utilityTypes";
 
 export type Known = "known";
 export type Unknown = "unknown";
@@ -112,7 +112,7 @@ export type ReducerFactoryReducedState<State, $KnownState, $IsKnownStateKnown> =
  * We want the same behaviour like `UnionPropsAndTypes<UnknownState, ReducedState>`,
  * but we want prevent that the primitive export type gets extended for example by `any[]`
  */
-export type InheritedStateUnionPropsAndTypes<State, $KnownState, $UnknownState> = PreferPrimitivesOverProps<
+export type InheritedStateUnionPropsAndTypes<State, $KnownState, $UnknownState> = PreferPrimitivesOverEmptyProps<
     UnionProps<ExtractObjectExceptArray<$UnknownState>, ExtractObjectExceptArray<State>>,
     IfNot2<UnionPrimitiveTypesAndArrays<$KnownState, $UnknownState>, ExcludeObjectExceptArray<State>>
 >;
