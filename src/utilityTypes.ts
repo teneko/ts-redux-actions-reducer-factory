@@ -3,32 +3,65 @@ import { ActionFunctions } from "redux-actions";
 import { And, If, Not, Or } from "typescript-logic";
 
 
-// Names of properties in T with types that include undefined
-// credits: https://github.com/Microsoft/TypeScript/pull/21316#issuecomment-359574388
-type OptionalPropertyNames<T> =
-    { [K in keyof T]: undefined extends T[K] ? K : never }[keyof T];
+/**
+ * Names of properties in T with types that include undefined
+ * credits: https://github.com/Microsoft/TypeScript/pull/21316#issuecomment-359574388
+ */
+// export type OptionalPropertyNames<
+//     T,
+//     __T extends ExtractObject<T>= ExtractObject<T>,
+//     __TKeys extends keyof __T = keyof __T
+//     > = (
+//         { [K in keyof T]: undefined extends T[K] ? K : never }[keyof T]
+//     );
 
-// Common properties from L and R with undefined in R[K] replaced by type in L[K]
-// credits: https://github.com/Microsoft/TypeScript/pull/21316#issuecomment-359574388
-type SpreadProperties<L, R, K extends keyof L & keyof R> =
-    { [P in K]: L[P] | Exclude<R[P], undefined> };
+// export type OriginalOptionalPropertyNames<T> =
+//     { [K in keyof T]: undefined extends T[K] ? K : never }[keyof T];
+
+// export type NonNonOptionalKeys<T> = { [k in keyof T]-?: undefined extends T[k] ? k : never }[keyof T];
+
+/**
+ * Checks
+ * credits: https://stackoverflow.com/a/49683575
+ */
+export type OptionalKeys<
+    T,
+    __T extends ExtractObject<T>= ExtractObject<T>,
+    > = (
+        { [K in keyof __T]-?: {} extends { [P in K]: __T[K] } ? K : never }[keyof __T]
+    );
+
+/**
+ * Common properties from L and R with undefined in R[K] replaced by type in L[K]
+ * credits: https://github.com/Microsoft/TypeScript/pull/21316#issuecomment-359574388
+ */
+type SpreadProperties<
+    Left,
+    Right,
+    LeftAndOptionalRightKeys extends keyof Left & keyof Right
+    > = (
+        { [P in LeftAndOptionalRightKeys]: Left[P] | Exclude<Right[P], undefined> }
+    );
 
 // Type of { ...L, ...R }
 // credits: https://github.com/Microsoft/TypeScript/pull/21316#issuecomment-359574388
 type Spread<
     Left,
     Right,
-    // __LeftKeys extends AnyKeys<Left> = AnyKeys<Left>,
-    // __RightKeys extends AnyKeys<Right> = AnyKeys<Right>,
-    > =
-    // Properties in L that don't exist in R
-    & Pick<Left, Exclude<keyof Left, keyof Right>>
-    // Properties in R with types that exclude undefined
-    & Pick<Right, Exclude<keyof Right, OptionalPropertyNames<Right>>>
-    // Properties in R, with types that include undefined, that don't exist in L
-    & Pick<Right, Exclude<OptionalPropertyNames<Right>, keyof Left>>
-    // Properties in R, with types that include undefined, that exist in L
-    & SpreadProperties<Left, Right, OptionalPropertyNames<Right> & keyof Left>;
+    __Left extends ExtractObject<Left> =  ExtractObject<Left>,
+    __Right extends ExtractObject<Right> = ExtractObject<Right>,
+    __LeftKeys extends keyof __Left = keyof __Left,
+    __RightKeys extends keyof __Right = keyof __Right,
+    > = (
+        // Properties in L, that don't exist in R
+        & Pick<__Left, Exclude<__LeftKeys, __RightKeys>>
+        // Optional/undefined properties from R, that don't exist in L
+        & Pick<__Right, Exclude<OptionalKeys<Right, __Right>, __LeftKeys>>
+        // Properties in R without properties that are optional/undefined
+        & Pick<__Right, Exclude<__RightKeys, OptionalKeys<__Right>>>
+        // Properties in R, with types that include undefined, that exist in L
+        & SpreadProperties<__Left, __Right, __LeftKeys & OptionalKeys<Right, __Right>>
+    );
 
 
 export type ActionTypeOrActionCreator<Payload> = ActionFunctions<Payload> | string;
@@ -126,21 +159,45 @@ export type IntersectPrimitiveTypes<A, B> = Exclude<A | B, Exclude<A, B> | Exclu
 //     );
 
 
+// export type UnionProps<>
 
-/** Intersect only those types that are related to the same property key of object A and B. This function is only applicable on object types. */
-export type IntersectProps<
+export type UnionMutualProps<
     A,
     B,
-    ExpandMode extends ExpandModes = DefaultExpandMode,
     __A extends ExtractObject<A> = ExtractObject<A>,
     __B extends ExtractObject<B> = ExtractObject<B>,
-    __AKeys extends AnyKeys<__A> = AnyKeys<__A>,
-    __BKeys extends AnyKeys<__B> = AnyKeys<__B>,
+    __MutualOptionalKeys extends OptionalKeys<A, __A> & OptionalKeys<B, __B> = OptionalKeys<A, __A> & OptionalKeys<B, __B>,
+    __MutualRequiredKeys extends Exclude<keyof __A & keyof __B, __MutualOptionalKeys> = Exclude<keyof __A & keyof __B, __MutualOptionalKeys>
+    > = (
+        { [K in __MutualOptionalKeys]?: __A[K] | __B[K]; }
+        & { [K in __MutualRequiredKeys]: __A[K] | __B[K]; }
+    );
+
+export type IntersectProps<
+    Left,
+    Right,
+    __Left extends ExtractObject<Left> = ExtractObject<Left>,
+    __Right extends ExtractObject<Right> = ExtractObject<Right>,
+    __MutualKeys extends keyof __Left & keyof __Right = keyof __Left & keyof __Right
+    > = (
+        TakeFirstIfMatchExtendsNotCase<
+            __MutualKeys,
+            UnionMutualProps<Left, Right, __Left, __Right>,
+            never
+        >
+    );
+
+/** Intersect only those types that are related to the same property key of object A and B. This function is only applicable on object types. */
+export type IntersectPropsWhileConserve<
+    A,
+    B,
+    __A extends ExtractObject<A> = ExtractObject<A>,
+    __B extends ExtractObject<B> = ExtractObject<B>,
+    __AKeys extends keyof __A = keyof __A,
+    __BKeys extends keyof __B = keyof __B,
     __MutualKeys extends __AKeys & __BKeys = __AKeys & __BKeys,
-    // For type compatibility
-    __MutualKeys2 extends (__MutualKeys extends __AKeys & __BKeys ? __MutualKeys : never) = (__MutualKeys extends __AKeys & __BKeys ? __MutualKeys : never),
-    __APicked extends Pick<__A, __MutualKeys2> = Pick<__A, __MutualKeys2>,
-    __BPicked extends Pick<__B, __MutualKeys2> = Pick<__B, __MutualKeys2>
+    __APicked extends Pick<__A, __MutualKeys> = Pick<__A, __MutualKeys>,
+    __BPicked extends Pick<__B, __MutualKeys> = Pick<__B, __MutualKeys>
     > = (
         TakeFirstIfMatchExtendsNotCase<
             __MutualKeys,
@@ -160,11 +217,11 @@ export type IntersectProps<
                         >
                     >
                 >,
-                // never // expand here
-                { [K in __MutualKeys2]: __A[K] | __B[K]; } // replace this by a type that expands recursively
-                // Spread<__APicked, __BPicked>
+                // never
+                // .. \/\/ expand here
+                UnionMutualProps<A, B, __A, __B> // replace this by a type that expands recursively
             >,
-            {}
+            never
         >
     );
 
@@ -176,10 +233,10 @@ export type IntersectPropsExceptArray<
     ExpandMode extends ExpandModes,
     __A extends ExtractObjectAfterExcludeArray<A> = ExtractObjectAfterExcludeArray<A>,
     __B extends ExtractObjectAfterExcludeArray<B> = ExtractObjectAfterExcludeArray<B>,
-    __AKeys extends AnyKeys<__A> = AnyKeys<__A>,
-    __BKeys extends AnyKeys<__B> = AnyKeys<__B>,
+    __AKeys extends keyof __A = keyof __A,
+    __BKeys extends keyof __B = keyof __B,
     __MutualKeys extends __AKeys & __BKeys = __AKeys & __BKeys,
-    > = IntersectProps<
+    > = IntersectPropsWhileConserve<
         A,
         B,
         ExpandMode,
@@ -190,16 +247,19 @@ export type IntersectPropsExceptArray<
         __MutualKeys
     >;
 
-export type PreferPrimitivesOverEmptyProps<Primitives, Props> = If<
-    And<Not<Extends<Primitives, never>>, And<Extends<Props, {}>, Extends<{}, Props>>>,
-    Primitives,
-    Props | Primitives
->;
+export type PreferPrimitivesOverEmptyProps<Primitives, Props> = (
+    If<
+        And<Not<Extends<Primitives, never>>, And<Extends<Props, {}>, Extends<{}, Props>>>,
+        Primitives,
+        Props | Primitives
+    >
+);
 
 export type IntersectPrimitivesAndPropsExceptArrays<
     A,
     B,
-    ExpandMode extends ExpandModes> = (
+    ExpandMode extends ExpandModes
+    > = (
         PreferPrimitivesOverEmptyProps<
             IntersectPrimitiveTypes<
                 A,
@@ -274,7 +334,7 @@ export type UnionPropsExcept<
     __MutualKeys extends __AKeys & __BKeys = __AKeys & __BKeys,
     __AKeysWithoutMutualKeys extends TakeFirstIfMatchExtendsNotCase<__MutualKeys, Exclude<__AKeys, __MutualKeys>, __AKeys> = TakeFirstIfMatchExtendsNotCase<__MutualKeys, Exclude<__AKeys, __MutualKeys>, __AKeys>,
     __IntersectedProps extends (
-        IntersectProps<
+        IntersectPropsWhileConserve<
             A,
             B,
             ExpandStateMode,
@@ -284,7 +344,7 @@ export type UnionPropsExcept<
             __BKeys,
             __MutualKeys>
     ) = (
-        IntersectProps<
+        IntersectPropsWhileConserve<
             A,
             B,
             ExpandStateMode,
@@ -335,11 +395,11 @@ export type UnionPrimitiveTypes<A, B> = ExcludeObject<A | B>;
 // > = __A extends Array<infer ArrA>
 
 
-export type IntersectPrimitiveTypesAndArrays<
-    A, B,
-    __A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
-    __B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>,
-    > = ExcludeObjectExceptArray<Exclude<__A2 | __B2, Exclude<__A2, __B2> | Exclude<__B2, __A2>>>;
+// // // // // // // // // // // // // // // // // // // // export type IntersectPrimitiveTypesAndArrays<
+// // // // // // // // // // // // // // // // // // // //     A, B,
+// // // // // // // // // // // // // // // // // // // //     __A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
+// // // // // // // // // // // // // // // // // // // //     __B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>,
+// // // // // // // // // // // // // // // // // // // //     > = ExcludeObjectExceptArray<Exclude<__A2 | __B2, Exclude<__A2, __B2> | Exclude<__B2, __A2>>>;
 
 // export type UnionPrimitiveTypesAndArraysExcept<
 //     A, B,
@@ -383,7 +443,7 @@ type test2 = typeof ctest;
 
 type test3 = AnyKeys<ITest> & AnyKeys<test_2>;
 
-type gh = IntersectProps<string[], string[], DefaultExpandMode>;
+type gh = IntersectPropsWhileConserve<string[], string[], DefaultExpandMode>;
 
 // type gh = IntersectArrays<string[], string[], DefaultExpandMode>;
 // type gj = string extends never ? true : false;
@@ -409,11 +469,11 @@ type ig2Keys = keyof ig2_0;
 type ig2Picked = Pick<ig2_0, ig2Keys>;
 type ig2Extends = Extends<ig2_0, ig2Picked>;
 
-type gg = IntersectProps<og, ig, DefaultExpandMode>;
-type gg2 = IntersectProps<gg, ig2_0, DefaultExpandMode>;
+type gg = IntersectPropsWhileConserve<ig, og, DefaultExpandMode>;
+type gg2 = IntersectPropsWhileConserve<gg, ig2_0, DefaultExpandMode>;
 
 
-type gg3 = IntersectProps<2, string, DefaultExpandMode>;
+type gg3 = IntersectPropsWhileConserve<2, string, DefaultExpandMode>;
 declare const cgg3: gg3;
 
 type gg4 = UnionPropsExcept<string[], string[], DefaultExpandMode>;
@@ -427,6 +487,10 @@ type gg5_1 = UnionPropsExcept<igg5, tgg5, DefaultExpandMode>;
 type gg5_2 = UnionPropsExcept<tgg5, igg5, DefaultExpandMode>;
 type gg5_2_1 = tgg5 extends igg5 ? true : false;
 
+// type sp = Spread<ig2_0 & { c?: null }, { a: "a2", d?: null }>;
+// declare const csp: sp;
+// csp.
+
 // type gg3Keys = keyof og & keyof string;
 
 // type test4 = keyof ig2_0 | keyof og;
@@ -439,3 +503,11 @@ type ot = "1" & "2" extends "1" ? true : false;
 /**
  *
  */
+
+type ko<
+    T,
+    __T extends ExtractObject<T> = ExtractObject<T>
+    > = keyof __T;
+type tko = ko<(number | { a: "a" })>;
+
+type test765 = {} extends {} & {} ? true : false;
