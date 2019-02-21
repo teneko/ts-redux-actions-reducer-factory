@@ -1,7 +1,7 @@
 import { ExcludeObjectExceptArray, Extends, ExtractObjectExceptArray } from "@teronis/ts-definitions";
 import { ReducerMap } from "redux-actions";
 import { If, Or } from "typescript-logic";
-import { ActionTypeOrActionCreator, IfNot2, PreferPrimitivesOverEmptyProps, PropsAndTypesExcept, UnionPrimitiveTypesAndArrays, UnionProps, UnionPropsAndTypes, UnionPropsAndTypesExcept, UnionPropsExcept } from "./utilityTypes";
+import { ActionTypeOrActionCreator, TakeFirstIfFirstExtendsNotCase, PreferPrimitivesOverEmptyProps, PropsAndTypesExcept, UnionPrimitiveTypesAndArrays, UnionProps, UnionPropsAndTypes, UnionPropsAndTypesExcept, UnionPropsExcept } from "./utilityTypes";
 
 export type Known = "known";
 export type Unknown = "unknown";
@@ -20,7 +20,7 @@ export type Prefer$OverExpandStateMode<$ExpandStateMode extends ReducerFactoryEx
     InterExpandStateMode extends undefined ? $ExpandStateMode : InterExpandStateMode;
 
 /** Only for view, not calulcating. */
-export type InheritedInterState<InterState, $KnownState, $UnknownState> = IfNot2<UnionPrimitiveTypesAndArrays<$KnownState, $UnknownState>, ExcludeObjectExceptArray<InterState>> |
+export type InheritedInterState<InterState, $KnownState, $UnknownState> = TakeFirstIfFirstExtendsNotCase<UnionPrimitiveTypesAndArrays<$KnownState, $UnknownState>, ExcludeObjectExceptArray<InterState>> |
     (ExtractObjectExceptArray<InterState> &
         ExtractObjectExceptArray<$KnownState> &
         ExtractObjectExceptArray<$UnknownState>);
@@ -114,7 +114,7 @@ export type ReducerFactoryReducedState<State, $KnownState, $IsKnownStateKnown> =
  */
 export type InheritedStateUnionPropsAndTypes<State, $KnownState, $UnknownState> = PreferPrimitivesOverEmptyProps<
     UnionProps<ExtractObjectExceptArray<$UnknownState>, ExtractObjectExceptArray<State>>,
-    IfNot2<UnionPrimitiveTypesAndArrays<$KnownState, $UnknownState>, ExcludeObjectExceptArray<State>>
+    TakeFirstIfFirstExtendsNotCase<UnionPrimitiveTypesAndArrays<$KnownState, $UnknownState>, ExcludeObjectExceptArray<State>>
 >;
 
 /** Whenever you need to expand unknown state, you would need it. */
