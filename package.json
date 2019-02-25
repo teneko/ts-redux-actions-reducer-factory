@@ -94,5 +94,8 @@
     "@types/redux-actions": "^2.3.2",
     "redux-actions": "^2.6.4",
     "typescript-logic": "0.0.0"
+  },
+  "dependencies": {
+    "typescript-tuple": "^2.1.1"
   }
 }
