@@ -44,7 +44,7 @@ export interface ValueOption {
 type ValueOptionKeys = keyof ValueOption;
 type ValueOptionArray = ValueOptionKeys[];
 
-export type DefaultValueOption = []; // & [...ValueOptionArray]; // TODO: remove [] and investigate _ in Value<...>
+// export type DefaultValueOption = []; // & [...ValueOptionArray]; // TODO: remove [] and investigate _ in Value<...>
 export type ValueOptionOrArray = ValueOptionKeys | ValueOptionArray;
 export type ValueOptionAsArray<Options extends ValueOptionOrArray> = Options extends Array<keyof ValueOption> ? Options : [Options];
 
@@ -89,6 +89,19 @@ interface InferDiscard2<T> {
 //         ? { _: Flat<P, PrependArrayItem<__A, Exclude<P, any[]>>> }
 //         // : T
 //         : T
+//     );
+
+// type Flat<
+//     T,
+//     __A extends any[]=[]
+//     > = (
+//         InferDiscard<
+//             T extends Array<infer P>
+//             // ? P extends Array<infer P2>
+//             ? { _: Flat<P, PrependArrayItem<__A, Exclude<P, any[]>>> }
+//             // : T
+//             : T
+//         >
 //     );
 
 // type Flat<
@@ -264,25 +277,6 @@ type Flatted2 = Flat2<["a", ["b", ["c", ["d"]]]]>;
 //     : never
 //     ];
 
-export type ValueContent<
-    C extends DefaultValueContent,
-    O extends ValueOptionOrArray =[],
-    __O extends ValueOptionAsArray<O> = ValueOptionAsArray<O>,
-    __C = __O extends [] ? C : (
-        __O[0] extends ValueOption["ExtractObject"]
-        ? ExtractObject<C>
-        : __O[0] extends ValueOption["ExcludeArray"]
-        ? ExcludeArray<C>
-        : __O[0] extends ValueOption["ExcludeObject"]
-        ? ExcludeObject<C>
-        : C
-    ),
-    __C2 = {
-        "empty": C;
-        "nonEmpty": ValueContent<__C, DropHead<__O>>;
-    }[__O extends [] ? "empty" : __O extends ValueOptionKeys[] ? "nonEmpty" : never]
-    > = any;
-
 // export type InferableValueContent<
 //     C extends DefaultValueContent,
 //     O extends ValueOptionOrArray =[],
@@ -332,64 +326,190 @@ export type ValueContent<
 //     ];
 // }
 
+// export type ValueContent<
+//     C extends DefaultValueContent,
+//     O extends ValueOptionOrArray,
+//     __O extends ValueOptionAsArray<O> = ValueOptionAsArray<O>,
+//     __C = __O extends [] ? C : (
+//         __O[0] extends ValueOption["ExtractObject"]
+//         ? ExtractObject<C>
+//         : __O[0] extends ValueOption["ExcludeArray"]
+//         ? ExcludeArray<C>
+//         : __O[0] extends ValueOption["ExcludeObject"]
+//         ? ExcludeObject<C>
+//         : C
+//     ),
+//     // __U extends unknown = unknown,
+//     > = {
+//         "empty": C;
+//         "nonEmpty": ValueContent<__C, DropHead<__O>>;
+//         // "nonEmpty": ((..._: ValueOptionArray) => never) extends ((_: infer ValueOption, ..._2: infer Rest) => any) ? ValueContent<__C, DropHead<__O>> : false;
+
+
+//         // "nonEmpty": (
+//         //     ((..._: O) => never) extends ((_: infer Option, ..._2: infer Rest) => never)
+//         //     ? Rest extends any[]
+//         //     ? __C extends {}
+//         //     ? ValueContent<__C, Rest>
+//         //     : never
+//         //     : never
+//         //     : never
+//         // );
+
+
+//         // "nonEmpty": (
+//         //     ((..._: ValueOptionAsArray<O>) => never) extends ((_: infer Option, ..._2: Array<infer P>) => never) ? (
+//         //         P[] extends ValueOptionArray ? { _: ValueContent<C, P[]> } : C
+//         //     ) : C
+//         // );
+//     }[
+
+//     // If<
+//     //     Extends<__O, []>,
+//     //     "empty",
+//     //     "nonEmpty"
+//     // >
+
+
+//     __O extends [] ? "empty" : "nonEmpty"
+
+//     // __O extends any
+//     // O extends (infer P)[] ?
+//     // P[] extends ValueOptionArray ? "nonEmpty" : "empty"
+//     // : never
+
+
+//     // __O extends []
+//     // ? "empty"
+//     // : [__U] extends Extends<never, never>
+//     // ? __O extends ValueOptionKeys[]
+//     // ? "nonEmpty"
+//     // : never
+//     // : never
+//     ];
+
+
+
+
+export type ValueContent<
+    C extends DefaultValueContent,
+    O extends ValueOptionOrArray,
+    __O extends ValueOptionAsArray<O> = ValueOptionAsArray<O>,
+    __C = __O extends [] ? C : (
+        __O[0] extends ValueOption["ExtractObject"]
+        ? ExtractObject<C>
+        : __O[0] extends ValueOption["ExcludeArray"]
+        ? ExcludeArray<C>
+        : __O[0] extends ValueOption["ExcludeObject"]
+        ? ExcludeObject<C>
+        : C
+    ),
+    // __U extends unknown = unknown,
+    > = {
+        "empty": C;
+        "nonEmpty": ValueContent<__C, DropHead<__O>>;
+        // "nonEmpty": ((..._: ValueOptionArray) => never) extends ((_: infer ValueOption, ..._2: infer Rest) => any) ? ValueContent<__C, DropHead<__O>> : false;
+
+
+        // "nonEmpty": (
+        //     ((..._: O) => never) extends ((_: infer Option, ..._2: infer Rest) => never)
+        //     ? Rest extends any[]
+        //     ? __C extends {}
+        //     ? ValueContent<__C, Rest>
+        //     : never
+        //     : never
+        //     : never
+        // );
+
+
+        // "nonEmpty": (
+        //     ((..._: ValueOptionAsArray<O>) => never) extends ((_: infer Option, ..._2: Array<infer P>) => never) ? (
+        //         P[] extends ValueOptionArray ? { _: ValueContent<C, P[]> } : C
+        //     ) : C
+        // );
+    }[
+
+    // If<
+    //     Extends<__O, []>,
+    //     "empty",
+    //     "nonEmpty"
+    // >
+
+
+    __O extends [] ? "empty" : "nonEmpty"
+
+    // __O extends any
+    // O extends (infer P)[] ?
+    // P[] extends ValueOptionArray ? "nonEmpty" : "empty"
+    // : never
+
+
+    // __O extends []
+    // ? "empty"
+    // : [__U] extends Extends<never, never>
+    // ? __O extends ValueOptionKeys[]
+    // ? "nonEmpty"
+    // : never
+    // : never
+    ];
+
+
+
 export type Value<
     C extends DefaultValueContent,
-    O extends ValueOptionOrArray =[],
-    // __O extends ValueOptionAsArray<O> = ValueOptionAsArray<O>,
+    O extends ValueOptionOrArray
     > = {
-        Content: ValueContent<C, O> extends any? ;
+        Content: ValueContent<C, O>;
     };
 
-type testttt = Value<string | "test" | any[] | { a: "a" }, ["ExcludeArray"]>["Content"];
+type testttt = Value<string | "test" | any[] | { a: "a" }, "ExcludeArray">["Content"];
 // type testttt2 = ValueContent<string | "test" | any[] | { a: "a" }, ["ExcludeArray", "ExtractObject"]>;
-declare const test7654: testttt;
+// declare const test7654: testttt;
 // test7654._._._
 // test7654.Content.Content.Content.
 // type testtt = ["ExcludeObject"] extends ValueOptionArray ? true : false;
 
-type DefaultValue = Value<DefaultValueContent, ValueOptionOrArray>;
+// type DefaultValue = Value2<DefaultValueContent, ValueOptionOrArray>;
 
 export interface LeftRight<
-    LV extends DefaultValue,
-    RV extends DefaultValue,
-    O extends ValueOptionOrArray = DefaultValueOption,
-    __LV extends Value<LV["Content"], O> = Value<LV["Content"], O>,
-    __RV extends Value<RV["Content"], O> = Value<RV["Content"], O>
+    Options extends ValueOptionOrArray,
+    LV extends Value<any, Options>,
+    RV extends Value<any, Options>,
     > {
-    LeftValue: __LV;
-    RightValue: __RV;
-    LeftContent: __LV["Content"];
-    RightContent: __RV["Content"];
+    LeftValue: LV;
+    RightValue: RV;
+    LeftContent: LV["Content"];
+    RightContent: RV["Content"];
 }
 
 // type DefaultLeftRight<O extends ValueOptionOrArray = DefaultValueOption> = (
 //     LeftRight<DefaultValue, DefaultValue, O>
 // );
 
-type DefaultLeftRight = LeftRight<DefaultValue, DefaultValue, ValueOptionOrArray>;
+// type DefaultLeftRight = LeftRight<DefaultValue, DefaultValue>;
 
 export type LeftRightL0<
-    LR extends DefaultLeftRight,
-    O extends ValueOptionOrArray = DefaultValueOption
+    O extends ValueOptionOrArray,
+    LR extends LeftRight<O, Value<any, O>, Value<any, O>>,
     > = (
         LeftRight<
+            O,
             LR["LeftValue"],
-            LR["RightValue"],
-            O
+            LR["RightValue"]
         >
     );
 
-export type LeftRightL1<
-    LV extends DefaultValueContent,
-    RV extends DefaultValueContent,
-    O extends ValueOptionOrArray = DefaultValueOption
-    > = (
-        LeftRight<
-            Value<LV>,
-            Value<RV>,
-            O
-        >
-    );
+// export type LeftRightL1<
+//     O extends ValueOptionOrArray,
+//     LV extends DefaultValueContent,
+//     RV extends DefaultValueContent,
+//     > = (
+//         LeftRightL0<
+//             O,
+//             LeftRight<O, Value<LV, O>,
+//             Value<RV, O>>
+//         >
+//     );
 
 // export interface ILeftRightObjects<
 //     LeftSideObject extends IValue = never,
@@ -423,7 +543,9 @@ export type LeftRightL1<
  * Checks
  * credits: https://stackoverflow.com/a/49683575
  */
-export type OptionalKeys<V extends DefaultValue> = (
+export type OptionalKeys<
+V extends DefaultValue
+> = (
     { [K in keyof V["Content"]]-?: {} extends { [P in K]: V["Content"][K] } ? K : never }[keyof V["Content"]]
 );
 
