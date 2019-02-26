@@ -1,4 +1,4 @@
-import { DefaultExpandMode, IntersectProps, UnionMutualProps, OptionalKeys, Value, LeftRight, LeftRightL1 } from "../../src/utilityTypes";
+import { DefaultExpandMode, IntersectProps, UnionMutualProps, OptionalKeys, Value, LeftRightValues, LeftRightValuesL1, LeftRightValuesL0 } from "../../src/utilityTypes";
 
 
 interface igg1 { a: "a"; b: "b"; c?: "c"; f?: "f"; g?: undefined; }
@@ -11,15 +11,15 @@ interface igg4 { a: "a2"; b: "b2"; e?: "e"; f: "f2" | undefined; }
 interface igg5 { a: "a"; b: "b"; c?: "c"; f?: undefined; g?: undefined; }
 interface igg6 { a: "a2"; b: "b2"; e?: "e"; f?: undefined | undefined; }
 
-type tgg1 = IntersectProps<LeftRightL1<igg1, igg2>>;
-type tgg1_1 = IntersectProps<LeftRightL1<igg1, igg2>>;
+type tgg1 = IntersectProps<LeftRightValuesL1<igg1, igg2>>;
+type tgg1_1 = IntersectProps<LeftRightValuesL1<igg1, igg2>>;
 declare const cgg1: tgg1;
 // cgg1.
-type tgg2 = IntersectProps<igg1, igg3>;
+type tgg2 = IntersectProps<LeftRightValuesL1<igg1, igg3>>;
 declare const cgg2: tgg2;
 // cgg2.;
 
-type tgg3 = UnionMutualProps<LeftRightL1<igg1, igg3>>;
+type tgg3 = UnionMutualProps<LeftRightValuesL1<igg1, igg3>>;
 type tgg3_0 = OptionalKeys<Value<igg1>>;
 type tgg3_0_1 = OptionalKeys<igg1>;
 type tgg3_0_2 = OptionalKeys<tigg1>;
