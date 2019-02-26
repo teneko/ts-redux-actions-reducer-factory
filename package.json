@@ -77,17 +77,17 @@
     "jsdom-global": "^3.0.2",
     "mocha": "^5.2.0",
     "nyc": "^13.3.0",
+    "redux-actions": "^2.6.4",
     "source-map-loader": "^0.2.4",
     "ts-loader": "^5.3.3",
     "ts-node": "^8.0.2",
     "tsconfig-paths-webpack-plugin": "^3.2.0",
     "tslint": "^5.12.1",
-    "typescript": "^3.3.3",
+    "typescript": "^3.3.3333",
+    "typescript-logic": "0.0.0",
     "webpack": "^4.29.5",
     "webpack-cli": "^3.2.3",
-    "webpack-node-externals": "^1.7.2",
-    "redux-actions": "^2.6.4",
-    "typescript-logic": "0.0.0"
+    "webpack-node-externals": "^1.7.2"
   },
   "peerDependencies": {
     "@teronis/ts-definitions": "~0.7.3",
