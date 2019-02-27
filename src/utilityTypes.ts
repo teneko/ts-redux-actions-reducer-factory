@@ -3,7 +3,28 @@ import { ActionFunctions } from "redux-actions";
 import { And, If, Not, Or } from "typescript-logic";
 // tslint:disable: interface-name
 
+/** credits: https://stackoverflow.com/a/49936686/11044059 */
+export type DeepPartial<T> = {
+    [P in keyof T]?: (
+        T[P] extends Array<infer U>
+        ? Array<DeepPartial<U>>
+        : T[P] extends ReadonlyArray<infer U>
+        ? ReadonlyArray<DeepPartial<U>>
+        : DeepPartial<T[P]>
+    )
+};
 
+export type DeepRequired<T> = {
+    [P in keyof T]-?: (
+        T[P] extends Array<infer U>
+        ? Array<DeepRequired<U>>
+        : T[P] extends ReadonlyArray<infer U>
+        ? ReadonlyArray<DeepRequired<U>>
+        : DeepRequired<T[P]>
+    )
+};
+
+type test649 = DeepRequired<DeepPartial<{ a: "a" }>>;
 
 
 // type Take<N extends number, T extends any[], R extends any[]=[]> = {
@@ -25,6 +46,8 @@ import { And, If, Not, Or } from "typescript-logic";
 // export type InferableHeadRest<
 // A extends any[],
 // >
+
+// export type DropHead<Tuple extends any> = ((..._: Tuple) => never) extends (_: infer _, ..._1: infer Rest) => never ? Rest : [];
 
 export type DropHead<Tuple extends any[]> = ((..._: Tuple) => never) extends (_: infer _, ..._1: infer Rest) => never ? Rest : [];
 
@@ -54,184 +77,32 @@ export type ValueOptionAsArray<Options extends ValueOptionOrArray> = Options ext
 
 export type DefaultValueContent = {};
 
-// type tt289357489 = ["ExtractObject", "ExtractObject"] extends (keyof ValueOption)[] ? true : false;
-
-// type t462<V> = V extends infer T ? T : never;
-
-// type PrependArrayItem<Tuple extends any[], Prepend> = (
-//     ((_: Prepend, ..._2: Tuple) => never) extends (..._: infer A) => never ? A : never
-// );
-
-// type Discard<T extends any = any> = { _: any };
-// type InferDiscard<T> = T extends { _: infer V } ? V : T;
-
-// interface InferDiscard2<T> {
-//     0: T extends { _: infer V } ? V : T;
-// }
-
-// type InferDiscard<T extends any> = T[T extends { _: infer V } ? "_" : never];
-
-// type InferLastDiscard<
-//     T extends Discard
-//     > = (
-//         {
-//             0: InferLastDiscard<T>;
-//             1: T["_"];
-//         }[T["_"] extends Discard ? 0 : 1]
-//     );
-
-// type InferLastDiscard<T extends Discard> = T["_"] extends Discard ? T["_"] : T["_"] ;
-
-// type Flat<
-//     T,
-//     __A extends any[]=[]
-//     > = (
-//         T extends Array<infer P>
-//         // ? P extends Array<infer P2>
-//         ? { _: Flat<P, PrependArrayItem<__A, Exclude<P, any[]>>> }
-//         // : T
-//         : T
-//     );
-
-// type Flat<
-//     T,
-//     __A extends any[]=[]
-//     > = (
-//         InferDiscard<
-//             T extends Array<infer P>
-//             // ? P extends Array<infer P2>
-//             ? { _: Flat<P, PrependArrayItem<__A, Exclude<P, any[]>>> }
-//             // : T
-//             : T
-//         >
-//     );
-
-// type Flat<
-//     T,
-//     __A extends any[]=[]
-//     > = (
-//         InferDiscard<
-//             T extends Array<infer P>
-//             // ? P extends Array<infer P2>
-//             ? { _: Flat<P, PrependArrayItem<__A, Exclude<P, any[]>>> }
-//             // : T
-//             : T
-//         >
-//     );
-
-// type FlatLight<T> = T extends Array<infer P> ? P : T;
-// type InferableFlatLight<T, U extends FlatLight<T> = FlatLight<T>> = U;
-
-// type test4842 = any extends FlatLight<arrays, infer T> ? T : never;
-
-// type Flat<
-//     T,
-//     __A extends any[]=[]
-//     > = (
-//         InferDiscard<
-//             T extends Array<infer P>
-//             // ? P extends Array<infer P2>
-//             // ? { _: Flat<P, PrependArrayItem<__A, Exclude<P, any[]>>> extends { _: infer V } ? PrependArrayItem<__A, V> : P }
-//             ? { _: Flat<P> }
-//             // : T
-//             : T
-//         >
-//     );
-
-// type Flat<
-//     T,
-//     __A extends any[]=[],
-//     __T = (
-//         // InferDiscard<
-//         T extends Array<infer P>
-//         // ? P extends Array<infer P2>
-//         ? { _: Flat<P, __A> }
-//         // : T
-//         : T
-//         // >
-//     )
-//     > = (
-//         // InferDiscard<
-//         __T extends Array<infer P>
-//         // ? P extends Array<infer P2>
-//         ? { _: Flat<P, __A> }
-//         // : T
-//         : [T extends Array<infer P> ? Exclude<P, any[]> : never , InferDiscard<__T> extends Array<infer P> ? P : never]
-//         // >
-//     );
-
-// type Flat<
-//     T extends any[],
-//     __A extends any[]=[]
-
-//     > = (
-//         // InferDiscard<
-//         T extends Array<infer P>
-//         // ? P extends Array<infer P2>
-//         ? { 0: Flat<> }[P extends P ? 0 : never]
-//         // : T
-//         : T
-//         // >
-//     );
-
-// type t764 = boolean extends never ? true : false;
-
-// type Flat<
-//     T,
-//     __A extends any[]=[],
-//     __T = (
-//         // InferDiscard<
-//         T extends Array<infer P>
-//         // ? P extends Array<infer P2>
-//         ? { _: Flat<P, __A> }
-//         // : T
-//         : T
-//         // >
-//     )
-//     > = (
-//         // InferDiscard<
-//         T extends Array<infer P>
-//         // ? P extends Array<infer P2>
-//         ? { _: [P, InferDiscard<__T> extends Array<infer P> ? P : never] }
-//         // : T
-//         : T
-//         // >
-//     );
-
-// type Flat2<T extends any[]> = T extends any[] ? T :;
-// type Flat2<T> = Except<Flat<T>, T>
-
-// type arrays = ["a", ["b", ["c"]], ["d"]];
-// type Flatted = Flat<arrays>;
-// type Flatted2
-// type Flatted2 = Flat2<Flat<arrays>>;
+type InferDiscard<V> = V extends { _: infer T } ? T : V;
+type Flat<T> = InferDiscard<T extends (infer P)[] ? { _: Flat<P> } : T>;
+type Flatted = Flat<["a", ["b", ["c", ["d"]]]]>;
 // Results in "a" | "b" | "c" | "d"
-
-// type abc = "a" | "b" | "c";
-// type abc = Flatted;
-// type abc2 = { [K in abc]: [K] }[abc];
-
-// type abc2_0 = abc2 extends string[] | any ? abc2 : never;
 
 type t45678 = [[], "tzr"] extends [string, any[]] ? true : false;
 
 type t566845 = Exclude<[[], "tzr"], ["tzr"]>;
-
-// type ttt33 = Exclude<"hha", string>;
 
 
 // type Flat_1<T> = InferredDiscard<T extends Array<infer P> ? { _: Flat<P> } : T>;
 // type Flatted_1 = Flat2<["a", ["b", ["c", ["d"]]]]>;
 // // Results in "a" | "b" | "c" | "d"
 
-type Flat2<T> = {
-    0: Flat2<T>;
-    1: T
-}[
-    T extends [] ? 0 : 1
-];
+// type Flat2<
+// Content extends {}
+// > = {
+//     empty: Content;
+//     nonEmpty: Flat2<Content>
+// }[(Content extends [] ? "empty" : "nonEmpty") : never];
 
-type Flatted2 = Flat2<["a", ["b", ["c", ["d"]]]]>;
+// interface Flat2Dummy<T, _> {
+//     Flatted: Flat2<T>;
+// }
+
+// type Flatted2 = Flat2<["a", ["b", ["c", ["d"]]]], [], $>;
 
 export type $ = {};
 
@@ -262,6 +133,55 @@ export type ValueContent<
         "nonEmpty": ValueContent<__C, DropHead<__O>, $CircularDependencyPreventer>;
     }[$CircularDependencyPreventer extends $ ? (Options extends [] ? "empty" : "nonEmpty") : never];
 
+// type test834 = ValueContent<"string", ValueOptions["ExtractObject"], $>;
+
+// export type ValueOptionAsArray2<Options extends ValueOptionOrArray> = Options extends Array<keyof ValueOptions> ? Options : [Options];
+
+// export type ValueContent2<
+//     Content extends DefaultValueContent,
+//     Options extends ValueOptionOrArray,
+//     __O extends ValueOptionAsArray2<Options> = ValueOptionAsArray2<Options>,
+//     // __C = __O extends [] ? Content : (
+//     //     __O[0] extends ValueOptions["ExtractObject"]
+//     //     ? ExtractObject<Content>
+//     //     : __O[0] extends ValueOptions["ExcludeArray"]
+//     //     ? ExcludeArray<Content>
+//     //     : __O[0] extends ValueOptions["ExcludeObject"]
+//     //     ? ExcludeObject<Content>
+//     //     : Content
+//     // ),
+//     > = {
+//         "empty": Content;
+//         "nonEmpty": ValueContent2<Content, DropHead<__O>>;
+//     }[(Options extends [] ? "empty" : "nonEmpty")];
+
+// type test834 = ValueContent2<"string", ValueOptions["ExtractObject"]>;
+
+// export type ValueOptionAsArray2<Options extends ValueOptionOrArray> = Options extends Array<keyof ValueOptions> ? Options : [Options];
+
+// export type ValueContent2<
+//     Content extends DefaultValueContent,
+//     __O extends ValueOptionAsArray2<any> = ValueOptionAsArray2<any>,
+//     > = {
+//         "empty": Content;
+//         "nonEmpty": ValueContent2<Content, DropHead<__O>>;
+//     }[(__O extends [] ? "empty" : "nonEmpty")];
+
+// type test834 = ValueContent2<"string", ValueOptions["ExtractObject"]>;
+
+// export type ValueOptionAsArray2<Options extends any[] | ""> = Options extends Array<keyof []> ? Options : [Options];
+// // export type DropHead2<Tuple extends any[]> = ((..._: Tuple) => never) extends (_: infer _, ..._1: infer Rest) => never ? Rest : [];
+// export type DropHead2<Tuple extends any[]> = ((..._: Tuple) => never) extends (_: infer _, ..._1: infer Rest) => never ? Rest : [];
+
+// export type Flat3<
+//     Content
+//     > = {
+//         "empty": never;
+//         "nonEmpty": ((args: (Content extends Array<infer P> ? P : never)) => never) extends (..._: infer U) => any ? Flat3<U> : never;
+//     }[(Content extends never ? "empty" : "nonEmpty")];
+
+// type test834 = Flat3<["a", ["b"]]>
+
 export type Value<
     Content extends DefaultValueContent,
     Options extends ValueOptionOrArray = DefaultValueOption,
@@ -284,7 +204,7 @@ type DefaultValue<C extends DefaultValueContent = DefaultValueContent, O extends
 type DefaultValueL1<O extends ValueOptionOrArray = DefaultValueOption, _ = $> = Value<DefaultValueContent, O, _>;
 type DefaultValueL2<_ = $> = Value<DefaultValueContent, DefaultValueOption, _>;
 
-export interface LeftRightValues<
+export interface Values<
     LeftValue extends DefaultValueL2<_>,
     RightValue extends DefaultValueL2<_>,
     _ = $
@@ -296,12 +216,12 @@ export interface LeftRightValues<
 }
 
 /** Use this, when you want to overwrite the options. */
-export type LeftRightValuesL0<
-    LR extends LeftRightValues<DefaultValueL2<_>, DefaultValueL2<_>>,
+export type ValuesL0<
+    LR extends Values<DefaultValueL2<_>, DefaultValueL2<_>>,
     O extends ValueOptionOrArray = DefaultValueOption,
     _ = $,
     > = (
-        LeftRightValuesL1<
+        ValuesL1<
             LR["LeftContent"],
             LR["RightContent"],
             O,
@@ -309,80 +229,30 @@ export type LeftRightValuesL0<
         >
     );
 
-export type LeftRightValuesL1<
+export type ValuesL1<
     LV extends DefaultValueContent,
     RV extends DefaultValueContent,
     O extends ValueOptionOrArray = DefaultValueOption,
     _ = $
     > = (
-        LeftRightValues<
+        Values<
             Value<LV, O, _>,
             Value<RV, O, _>,
             _
         >
     );
 
-type DefaultLeftRightValues = LeftRightValues<DefaultValue, DefaultValue>;
-// type DefaultLeftRight2 = LeftRight<DefaultValue, DefaultValue>;
-// type DefaultLeftRightL1<_ = $> = LeftRight<DefaultValueL2<_>, DefaultValueL2<_>, _>;
-
-// export interface ILeftRightObjects<
-//     LeftSideObject extends IValue = never,
-//     RightSideObject extends IValue = never
-//     > extends ILeftRight<
-//     LeftSideObject,
-//     RightSideObject
-//     > {
-//     LeftSideObject: LeftSideObject;
-//     RightSideObject: RightSideObject;
-//     LeftObject: LeftSideObject["SideObject"];
-//     RightObject: RightSideObject["SideObject"];
-// }
-
-// /** A shortcut for ILeftRightObjects. */
-// export type LeftRightObjects<
-//     LeftRight extends ILeftRight
-//     > = (
-//         ILeftRightObjects<
-//             ISideObject<
-//                 LeftRight["LeftSide"]
-//             >,
-//             ISideObject<
-//                 LeftRight["RightSide"]
-//             >
-//         >
-//     );
-
+type DefaultValues = Values<DefaultValue, DefaultValue>;
 
 /**
- * Checks
+ * Get the optional keys from an object.
  * credits: https://stackoverflow.com/a/49683575
  */
-// export type OptionalKeys<
-//     V extends DefaultValue,
-//     > = (
-//         { [K in keyof V["Content"]]-?: {} extends { [P in K]: V["Content"][K] } ? K : never }[keyof V["Content"]]
-//     );
 export type OptionalKeys<
-    Props extends DefaultValueContent,
+    Props,
     > = (
         { [K in keyof Props]-?: {} extends { [P in K]: Props[K] } ? K : never }[keyof Props]
     );
-
-// export interface OptionalKeys2<
-
-// > {
-
-// }
-
-// declare const t57893: any[] = ["test"];
-
-
-// export type OptionalKeysL1<
-//     C extends DefaultValueContent
-//     > = (
-//         OptionalKeys<Value<C>>
-//     );
 
 // /**
 //  * Common properties from L and R with undefined in R[K] replaced by type in L[K]
@@ -396,8 +266,8 @@ export type OptionalKeys<
 //         { [P in LeftAndOptionalRightKeys]: Left[P] | Exclude<Right[P], undefined> }
 //     );
 
-// // Type of { ...L, ...R }
-// // credits: https://github.com/Microsoft/TypeScript/pull/21316#issuecomment-359574388
+// Type of { ...L, ...R }
+// credits: https://github.com/Microsoft/TypeScript/pull/21316#issuecomment-359574388
 // type Spread<
 //     Left,
 //     Right,
@@ -407,14 +277,118 @@ export type OptionalKeys<
 //     __RightKeys extends keyof __Right = keyof __Right,
 //     > = (
 //         // Properties in L, that don't exist in R
-//         & Pick<__Left, Exclude<__LeftKeys, __RightKeys>>
+//         // & Pick<__Left, Exclude<__LeftKeys, __RightKeys>>
 //         // Optional/undefined properties from R, that don't exist in L
-//         & Pick<__Right, Exclude<OptionalKeys<Right, __Right>, __LeftKeys>>
-//         // Properties in R without properties that are optional/undefined
-//         & Pick<__Right, Exclude<__RightKeys, OptionalKeys<__Right>>>
+//         & PickOptionalPropsAsRequired<__Right , Exclude<OptionalKeys<Right>, __LeftKeys>>
+//         // Properties in R without properties that are optional/undefined.
+//         // & Pick<__Right, Exclude<__RightKeys, OptionalKeys<__Right>>>
 //         // Properties in R, with types that include undefined, that exist in L
-//         & SpreadProperties<__Left, __Right, __LeftKeys & OptionalKeys<Right, __Right>>
+//         // & SpreadProperties<__Left, __Right, __LeftKeys & OptionalKeys<Right>>
 //     );
+
+/**
+ * From T, pick a set of properties whose keys are in the union K
+ */
+// type PickAsRequired<T, K extends keyof T> = {
+//     [P in K]-?: T[P] | undefined;
+// };
+
+/**
+ * Common properties from L and R with undefined in R[K] replaced by type in L[K]
+ * credits: https://github.com/Microsoft/TypeScript/pull/21316#issuecomment-359574388
+ */
+// type SpreadProperties<
+//     Left,
+//     Right,
+//     LeftAndOptionalRightKeys extends keyof Left & keyof Right
+//     > = (
+//         { [P in LeftAndOptionalRightKeys]: Left[P] | Exclude<Right[P], undefined> }
+//     );
+// type SpreadProperties<
+//     Values extends DefaultValues,
+//     __ValuesKeychain extends ValuesKeychain<Values> = ValuesKeychain<Values>,
+//     > = { [P in __ValuesKeychain["MutualKeys"]]: Values["RightContent"][P] };
+// type SpreadProperties<
+// Values extends DefaultValues
+// > = {
+//     [P in __ValuesKeychain["MutualKeys"]]: (
+//         If<
+//             And<And<Extends<Values["RightContent"][P], object>, Extends<Values["LeftContent"][P], object>>, Extends<Options["Recursive"], true>>,
+//             Spread<ValuesL1<Values["LeftContent"][P], Values["RightContent"][P]>, Options>,
+//             Values["RightContent"][P]
+//         >
+//     )
+// };
+
+interface SpreadOptions {
+    Recursive?: boolean;
+    DeepRequired?: boolean;
+}
+
+interface DefaultSpreadOptions extends SpreadOptions {
+    Recursive: false;
+    DeepRequired: false;
+}
+
+type SpreadProperty<
+    Values extends DefaultValues,
+    Options extends Required<SpreadOptions>,
+    __ValuesKeychain extends ValuesKeychain<Values>,
+    PropKey extends __ValuesKeychain["MutualKeys"],
+    > = (
+        If<
+            And<And<Extends<Values["RightContent"][PropKey], object>, Extends<Values["LeftContent"][PropKey], object>>, Extends<Options["Recursive"], true>>,
+            NotRequirableSpread<ValuesL1<Values["LeftContent"][PropKey], Values["RightContent"][PropKey]>, Options>,
+            Values["RightContent"][PropKey]
+        >
+    );
+
+// Type of { ...L, ...R }
+// credits: https://github.com/Microsoft/TypeScript/pull/21316#issuecomment-359574388
+type NotRequirableSpread<
+    Values extends DefaultValues,
+    Options extends Required<SpreadOptions> = DefaultSpreadOptions,
+    __ValuesKeychain extends ValuesKeychain<Values> = ValuesKeychain<Values>,
+    __RemnantsKeychain extends RemnantsKeychain<__ValuesKeychain> = RemnantsKeychain<__ValuesKeychain>,
+    > = (
+        // // Properties in L, that don't exist in R
+        Pick<Values["LeftContent"], __RemnantsKeychain["LeftRemnant"]["Keys"]>
+        // // Optional/undefined properties from R, that don't exist in L
+        // & Pick<__Right, Exclude<OptionalKeys<Right>, __LeftKeys>>
+        // // Properties in R without properties that are optional/undefined.
+        & Pick<Values["RightContent"], __RemnantsKeychain["RightRemnant"]["Keys"]>
+        // // Properties in R, with types that include undefined, that exist in L
+        & {
+            [P in __ValuesKeychain["RightValueKeychain"]["OptionalKeys"]]?: (
+                SpreadProperty<Values, Options, __ValuesKeychain, P>
+            )
+        }
+        & {
+            [P in __ValuesKeychain["RightValueKeychain"]["RequiredKeys"]]: (
+                SpreadProperty<Values, Options, __ValuesKeychain, P>
+            )
+        }
+    );
+
+export type Spread<
+    Values extends DefaultValues,
+    Options extends SpreadOptions = DefaultSpreadOptions,
+    __Options extends Required<Options> = Required<Options>,
+    __ValuesKeychain extends ValuesKeychain<Values> = ValuesKeychain<Values>,
+    __RemnantsKeychain extends RemnantsKeychain<__ValuesKeychain> = RemnantsKeychain<__ValuesKeychain>
+    > = (
+        __Options["DeepRequired"] extends true
+        ? DeepRequired<NotRequirableSpread<Values, __Options, __ValuesKeychain, __RemnantsKeychain>>
+        : NotRequirableSpread<Values, __Options, __ValuesKeychain, __RemnantsKeychain>
+    );
+
+type test924_0 = ValuesL1<{ a?: "a", b: { a: "a2" }, d?: "d", e: { a: "a3", h: "h", haha?: "lol" } }, { a: undefined, b?: boolean, c?: undefined, e: { a: { b: "b3" } } }>;
+type test924_1 = ValuesKeychain<test924_0>["MutualRequiredKeys"];
+type test924 = Spread<test924_0, { Recursive: true, DeepRequired: true }>;
+// type test924 = Spread<ValuesL1<{ a: "test" }, {}>>;
+declare const ctest924: test924;
+// ctest924.
+
 
 
 export type ActionTypeOrActionCreator<Payload> = ActionFunctions<Payload> | string;
@@ -467,19 +441,19 @@ export type TakeFirstIfMatchExtendsNotCase<Match, First, Second, NotCase = never
 //     __MutualKeys2 extends (__MutualKeys extends __AKeys & __BKeys ? __MutualKeys : never) = (__MutualKeys extends __AKeys & __BKeys ? __MutualKeys : never),
 //     > = { [K in __MutualKeys2]: A[K] | B[K]; };
 
-export interface IntersectPrimitivesOptions {
+export interface PrimitivesIntersectionOptions {
     ValueOptions: ValueOptionOrArray;
 }
 
-interface DefaultIntersectPrimitivesOptions extends IntersectPrimitivesOptions {
+interface DefaultPrimitivesIntersectionOptions extends PrimitivesIntersectionOptions {
     ValueOptions: [ValueOptions["ExcludeObject"]];
 }
 
 /** Intersect only the primitive types of Object A and Object B. */
 export type IntersectPrimitives<
-    Values extends DefaultLeftRightValues,
-    Options extends IntersectPrimitivesOptions = DefaultIntersectPrimitivesOptions,
-    __Values extends LeftRightValuesL0<Values, Options["ValueOptions"]> = LeftRightValuesL0<Values, Options["ValueOptions"]>
+    Values extends DefaultValues,
+    Options extends PrimitivesIntersectionOptions = DefaultPrimitivesIntersectionOptions,
+    __Values extends ValuesL0<Values, Options["ValueOptions"]> = ValuesL0<Values, Options["ValueOptions"]>
     > = (
         Exclude<
             __Values["LeftContent"] | __Values["RightContent"],
@@ -571,30 +545,67 @@ interface ValueKeychain<
 
 // __test extends Pick<__LR4Primitives["LeftContent"], ValueKeychain<__LR4Primitives["LeftValue"]>["Keys"]> = any
 
-type LeftRightKeychain<
-    Values extends DefaultLeftRightValues,
+// interface ValuesKeychain<
+//     Values extends DefaultValues,
+//     __LeftKeychain extends ValueKeychain<Values["LeftContent"]> = ValueKeychain<Values["LeftContent"]>,
+//     __RightKeychain extends ValueKeychain<Values["RightContent"]> = ValueKeychain<Values["RightContent"]>,
+//     __MutualOptionalProps extends __LeftKeychain["OptionalKeys"] & __RightKeychain["OptionalKeys"]= __LeftKeychain["OptionalKeys"] & __RightKeychain["OptionalKeys"],
+//     __MutualRequiredProps extends __LeftKeychain["RequiredKeys"] & __RightKeychain["RequiredKeys"]= __LeftKeychain["RequiredKeys"] & __RightKeychain["RequiredKeys"],
+//     > {
+//         LeftValueKeychain: __LeftKeychain;
+//         RightValueKeychain: __RightKeychain;
+//         OptionalKeys: __LeftKeychain["OptionalKeys"] | __RightKeychain["OptionalKeys"];
+//         RequiredKeys: __LeftKeychain["RequiredKeys"] | __RightKeychain["RequiredKeys"];
+//         Keys: __LeftKeychain["Keys"] | __RightKeychain["Keys"];
+//         MutualOptionalKeys: __MutualOptionalProps;
+//         MutualRequiredKeys: __MutualRequiredProps;
+//         MutualKeys: __MutualOptionalProps | __MutualRequiredProps;
+//     };
+
+interface ValuesKeychain<
+    Values extends DefaultValues,
     __LeftKeychain extends ValueKeychain<Values["LeftContent"]> = ValueKeychain<Values["LeftContent"]>,
-    __RightKeychain extends ValueKeychain<Values["RightContent"]> = ValueKeychain<Values["RightContent"]>,
-    __MutualOptionalProps extends __LeftKeychain["OptionalKeys"] & __RightKeychain["OptionalKeys"]= __LeftKeychain["OptionalKeys"] & __RightKeychain["OptionalKeys"],
-    __MutualRequiredProps extends __LeftKeychain["RequiredKeys"] & __RightKeychain["RequiredKeys"]= __LeftKeychain["RequiredKeys"] & __RightKeychain["RequiredKeys"],
-    > = {
-        LeftValueKeychain: __LeftKeychain;
-        RightValueKeychain: __RightKeychain;
-        OptionalKeys: __LeftKeychain["OptionalKeys"] | __RightKeychain["OptionalKeys"];
-        RequiredKeys: __LeftKeychain["RequiredKeys"] | __RightKeychain["RequiredKeys"];
-        Keys: __LeftKeychain["Keys"] | __RightKeychain["Keys"];
-        MutualOptionalKeys: __MutualOptionalProps;
-        MutualRequiredKeys: __MutualRequiredProps;
-        MutualKeys: __MutualOptionalProps | __MutualRequiredProps;
-    };
+    __RightKeychain extends ValueKeychain<Values["RightContent"]> = ValueKeychain<Values["RightContent"]>
+    > {
+    LeftValueKeychain: __LeftKeychain;
+    RightValueKeychain: __RightKeychain;
+    OptionalKeys: __LeftKeychain["OptionalKeys"] | __RightKeychain["OptionalKeys"];
+    RequiredKeys: __LeftKeychain["RequiredKeys"] | __RightKeychain["RequiredKeys"];
+    Keys: __LeftKeychain["Keys"] | __RightKeychain["Keys"];
+    MutualOptionalKeys: __LeftKeychain["OptionalKeys"] & __RightKeychain["OptionalKeys"];
+    MutualRequiredKeys: __LeftKeychain["RequiredKeys"] & __RightKeychain["RequiredKeys"];
+    MutualKeys: __LeftKeychain["Keys"] & __RightKeychain["Keys"];
+}
+
+type DefaultValuesKeychain = ValuesKeychain<DefaultValues, any, any>;
+
+/** Represents an interface that calculates the left keys without the right keys. */
+export interface RemnantKeychain<
+    Keychain extends DefaultValuesKeychain,
+    OtherValueKeychain extends Keychain["LeftValueKeychain"] | Keychain["RightValueKeychain"]
+    > {
+    OptionalKeys: Exclude<Keychain["OptionalKeys"], OtherValueKeychain["OptionalKeys"]>;
+    RequiredKeys: Exclude<Keychain["RequiredKeys"], OtherValueKeychain["RequiredKeys"]>;
+    Keys: Exclude<Keychain["Keys"], OtherValueKeychain["Keys"]>;
+}
+
+export interface RemnantsKeychain<
+    ValuesKeychain extends DefaultValuesKeychain
+    > {
+    LeftRemnant: RemnantKeychain<ValuesKeychain, ValuesKeychain["RightValueKeychain"]>;
+    RightRemnant: RemnantKeychain<ValuesKeychain, ValuesKeychain["LeftValueKeychain"]>;
+}
+
+type test637 = ValuesKeychain<ValuesL1<{ b: "a" }, { b: "b" }>>;
+type test638 = RemnantKeychain<test637, test637["RightValueKeychain"]>["Keys"];
 
 export type UnionMutualProps<
-    Values extends DefaultLeftRightValues,
-    __Extras extends LeftRightKeychain<Values> = LeftRightKeychain<Values>,
-    __AreMutualOptionalKeysNotNever extends Not<Extends<__Extras["MutualOptionalKeys"], never>> = Not<Extends<__Extras["MutualOptionalKeys"], never>>,
-    __AreMutualRequiredKeysNotNever extends Not<Extends<__Extras["MutualRequiredKeys"], never>> = Not<Extends<__Extras["MutualRequiredKeys"], never>>,
-    __MutualOptionalProps extends { [K in __Extras["MutualOptionalKeys"]]?: Values["LeftContent"][K] | Values["RightContent"][K]; } = { [K in __Extras["MutualOptionalKeys"]]?: Values["LeftContent"][K] | Values["RightContent"][K]; },
-    __MutualRequiredProps extends { [K in __Extras["MutualRequiredKeys"]]: Values["LeftContent"][K] | Values["RightContent"][K]; } = { [K in __Extras["MutualRequiredKeys"]]: Values["LeftContent"][K] | Values["RightContent"][K]; },
+    Values extends DefaultValues,
+    __ValuesKeychain extends ValuesKeychain<Values> = ValuesKeychain<Values>,
+    __AreMutualOptionalKeysNotNever extends Not<Extends<__ValuesKeychain["MutualOptionalKeys"], never>> = Not<Extends<__ValuesKeychain["MutualOptionalKeys"], never>>,
+    __AreMutualRequiredKeysNotNever extends Not<Extends<__ValuesKeychain["MutualRequiredKeys"], never>> = Not<Extends<__ValuesKeychain["MutualRequiredKeys"], never>>,
+    __MutualOptionalProps extends { [K in __ValuesKeychain["MutualOptionalKeys"]]?: Values["LeftContent"][K] | Values["RightContent"][K]; } = { [K in __ValuesKeychain["MutualOptionalKeys"]]?: Values["LeftContent"][K] | Values["RightContent"][K]; },
+    __MutualRequiredProps extends { [K in __ValuesKeychain["MutualRequiredKeys"]]: Values["LeftContent"][K] | Values["RightContent"][K]; } = { [K in __ValuesKeychain["MutualRequiredKeys"]]: Values["LeftContent"][K] | Values["RightContent"][K]; },
     > = (
         If<
             And<
@@ -625,26 +636,27 @@ export type UnionMutualProps<
 //         >
 //     );
 
-export interface IntersectPropsOptions {
-    ValueOptions: ValueOptionOrArray;
+export interface PropsIntersectionOptions {
+    ValueOptions?: ValueOptionOrArray;
 }
 
-interface DefaultIntersectPropsOptions extends IntersectPropsOptions {
+interface DefaultPropsIntersectionOptions extends PropsIntersectionOptions {
     ValueOptions: [ValueOptions["ExtractObject"]];
 }
 
 /** Intersect only those types that are related to the same property key of object A and B. This function is only applicable on object types. */
 export type IntersectProps<
-    Values extends DefaultLeftRightValues,
-    Options extends IntersectPropsOptions = DefaultIntersectPropsOptions,
+    Values extends DefaultValues,
+    Options extends PropsIntersectionOptions = DefaultPropsIntersectionOptions,
     _ = $,
-    __Values extends LeftRightValuesL0<Values, Options["ValueOptions"], _> = LeftRightValuesL0<Values, Options["ValueOptions"], _>,
-    __Extras extends LeftRightKeychain<__Values> = LeftRightKeychain<__Values>,
-    __LeftMutualPick extends Pick<__Values["LeftContent"], __Extras["MutualKeys"]> = Pick<__Values["LeftContent"], __Extras["MutualKeys"]>,
-    __RightMutualPick extends Pick<__Values["RightContent"], __Extras["MutualKeys"]> = Pick<__Values["RightContent"], __Extras["MutualKeys"]>
+    __Options extends Required<PropsIntersectionOptions> = Spread<ValuesL1<PropsIntersectionOptions, {}>>,
+    __Values extends ValuesL0<Values, __Options["ValueOptions"], _> = ValuesL0<Values, Options["ValueOptions"], _>,
+    __ValuesKeychain extends ValuesKeychain<__Values> = ValuesKeychain<__Values>,
+    __LeftMutualPick extends Pick<__Values["LeftContent"], __ValuesKeychain["MutualKeys"]> = Pick<__Values["LeftContent"], __ValuesKeychain["MutualKeys"]>,
+    __RightMutualPick extends Pick<__Values["RightContent"], __ValuesKeychain["MutualKeys"]> = Pick<__Values["RightContent"], __ValuesKeychain["MutualKeys"]>
     > = (
         TakeFirstIfMatchExtendsNotCase<
-            __Extras["MutualKeys"],
+            __ValuesKeychain["MutualKeys"],
             If< // If both picked objects extends each other, then ...
                 And<Extends<__LeftMutualPick, __RightMutualPick>, Extends<__RightMutualPick, __LeftMutualPick>>,
                 If<
@@ -663,20 +675,20 @@ export type IntersectProps<
                 >,
                 // never
                 // .. \/\/ expand here
-                UnionMutualProps<__Values, __Extras> // replace this by a type that expands recursively
+                UnionMutualProps<__Values, __ValuesKeychain> // replace this by a type that expands recursively
             >,
             never
         >
     );
 
-export interface IntersectPrimitivesAndPropsOptions {
-    PrimitiveOptions: IntersectPrimitivesOptions;
-    PropsOptions: IntersectPropsOptions;
+export interface PrimitivesAndPropsIntersectionOptions {
+    PrimitiveOptions?: PrimitivesIntersectionOptions;
+    PropsOptions?: PropsIntersectionOptions;
 }
 
-interface DefaultIntersectPrimitivesAndPropsOptions extends IntersectPrimitivesAndPropsOptions {
-    PrimitiveOptions: DefaultIntersectPrimitivesOptions;
-    PropsOptions: DefaultIntersectPropsOptions;
+interface DefaultPrimitivesAndPropsIntersectionOptions extends PrimitivesAndPropsIntersectionOptions {
+    PrimitiveOptions: DefaultPrimitivesIntersectionOptions;
+    PropsOptions: DefaultPropsIntersectionOptions;
 }
 
 export type PreferPrimitivesOverEmptyProps<Primitives, Props> = (
@@ -689,24 +701,36 @@ export type PreferPrimitivesOverEmptyProps<Primitives, Props> = (
 );
 
 export type IntersectPrimitivesAndProps<
-    Values extends DefaultLeftRightValues,
-    Options extends IntersectPrimitivesAndPropsOptions = DefaultIntersectPrimitivesAndPropsOptions,
-    __PrimitivesValues extends LeftRightValuesL0<Values, Options["PrimitiveOptions"]["ValueOptions"]> = LeftRightValuesL0<Values, Options["PrimitiveOptions"]["ValueOptions"]>,
-    __PropsValues extends LeftRightValuesL0<Values, Options["PropsOptions"]["ValueOptions"]> = LeftRightValuesL0<Values, Options["PropsOptions"]["ValueOptions"]>,
+    Values extends DefaultValues,
+    Options extends PrimitivesAndPropsIntersectionOptions = DefaultPrimitivesAndPropsIntersectionOptions,
+    // __Options extends Spread<DefaultPrimitivesAndPropsIntersectionOptions, Options> = Spread<DefaultPrimitivesAndPropsIntersectionOptions, Options>
     > = (
         PreferPrimitivesOverEmptyProps<
-            IntersectPrimitives<__PrimitivesValues>,
-            IntersectProps<__PropsValues>
+            IntersectPrimitives<Values, Options["PrimitiveOptions"]>,
+            IntersectProps<Values, Options["PropsOptions"]>
         >
     );
 
-type testtt_0 = LeftRightValuesL1<{ a: "a", b: "b" } | number, { a: "a", b: "b2" } | number>;
-type testtt_0_1 = LeftRightValuesL0<testtt_0, ["ExcludeObject"]>;
+// type test3456 = Spread<DefaultPrimitivesAndPropsIntersectionOptions, {
+//     PrimitiveOptions: {
+//         ValueOptions: ["ExcludeObject"]
+//     }
+// }>;
+
+// declare const tttt: test3456;
+// tttt.PropsOptions.ValueOptions
+
+type testtt_0 = ValuesL1<{ a: "a", b: "b" } | number, { a: "a", b: "b2" } | number>;
+type testtt_0_1 = ValuesL0<testtt_0, ["ExcludeObject"]>;
 type testtt23 = IntersectPrimitives<testtt_0_1>;
-type testtt_0_2 = LeftRightValuesL0<testtt_0, ["ExtractObject"]>;
+type testtt_0_2 = ValuesL0<testtt_0, ["ExtractObject"]>;
 type testtt24 = IntersectProps<testtt_0_2>;
-type testtt55 = LeftRightKeychain<testtt_0_2>;
-type testtt = IntersectPrimitivesAndProps<testtt_0>;
+type testtt55 = ValuesKeychain<testtt_0_2>;
+type testtt = IntersectPrimitivesAndProps<testtt_0, {
+    PrimitiveOptions: {
+        ValueOptions: ["ExcludeObject"]
+    }
+}>;
 
 
 // export type t2345 = [test:];
@@ -878,7 +902,7 @@ type test2 = typeof ctest;
 
 type test3 = AnyKeys<ITest> & AnyKeys<test_2>;
 
-type gh = IntersectProps<LeftRightValuesL1<{ a: "a" }, { a: "b" }>>;
+type gh = IntersectProps<ValuesL1<{ a: "a" }, { a: "b" }>>;
 
 // type gh = IntersectArrays<string[], string[], DefaultExpandMode>;
 // type gj = string extends never ? true : false;
