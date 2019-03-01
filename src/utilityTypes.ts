@@ -24,8 +24,23 @@ export type DeepRequired<T> = {
     )
 };
 
-type test649 = DeepRequired<DeepPartial<{ a: "a" }>>;
+export type NotTypeKeys<T, NotType = never> = Pick<T, { [K in keyof T]: T[K] extends NotType ? never : K }[keyof T]>;
 
+type DeepNotNotType<
+    T extends { [key: string]: any },
+    NotType,
+    __NotNeverKeys extends NotTypeKeys<T, NotType> = NotTypeKeys<T, NotType>
+    > = { [P in keyof __NotNeverKeys]: DeepNotNotType<__NotNeverKeys[P], NotType> };
+
+// type NonNever<T extends {}> = Pick<T, { [K in keyof T]: T[K] extends never ? never : K }[keyof T]>;
+
+type test123 = undefined extends never ? true : false;
+
+
+// type GetDefined<TypesMap extends { [key: string]: any }> = keyof NonNever<{ [T in keyof TypesMap]: TypesMap[T] extends undefined ? never : TypesMap[T] }>;
+
+type test649 = DeepNotNotType<{ a: never; b: "b", c: { a: never } }, never>;
+declare const ctest649: test
 
 // type Take<N extends number, T extends any[], R extends any[]=[]> = {
 //     0: Reverse<R>,
@@ -322,12 +337,10 @@ export type OptionalKeys<
 
 interface SpreadOptions {
     Recursive?: boolean;
-    DeepRequired?: boolean;
 }
 
 interface DefaultSpreadOptions extends SpreadOptions {
     Recursive: false;
-    DeepRequired: false;
 }
 
 type SpreadProperty<
@@ -338,14 +351,14 @@ type SpreadProperty<
     > = (
         If<
             And<And<Extends<Values["RightContent"][PropKey], object>, Extends<Values["LeftContent"][PropKey], object>>, Extends<Options["Recursive"], true>>,
-            NotRequirableSpread<ValuesL1<Values["LeftContent"][PropKey], Values["RightContent"][PropKey]>, Options>,
+            Spread<ValuesL1<Values["LeftContent"][PropKey], Values["RightContent"][PropKey]>, Options>,
             Values["RightContent"][PropKey]
         >
     );
 
 // Type of { ...L, ...R }
 // credits: https://github.com/Microsoft/TypeScript/pull/21316#issuecomment-359574388
-type NotRequirableSpread<
+type Spread<
     Values extends DefaultValues,
     Options extends Required<SpreadOptions> = DefaultSpreadOptions,
     __ValuesKeychain extends ValuesKeychain<Values> = ValuesKeychain<Values>,
@@ -370,24 +383,24 @@ type NotRequirableSpread<
         }
     );
 
-export type Spread<
-    Values extends DefaultValues,
-    Options extends SpreadOptions = DefaultSpreadOptions,
-    __Options extends Required<Options> = Required<Options>,
-    __ValuesKeychain extends ValuesKeychain<Values> = ValuesKeychain<Values>,
-    __RemnantsKeychain extends RemnantsKeychain<__ValuesKeychain> = RemnantsKeychain<__ValuesKeychain>
-    > = (
-        __Options["DeepRequired"] extends true
-        ? DeepRequired<NotRequirableSpread<Values, __Options, __ValuesKeychain, __RemnantsKeychain>>
-        : NotRequirableSpread<Values, __Options, __ValuesKeychain, __RemnantsKeychain>
-    );
+// export type Spread<
+//     Values extends DefaultValues,
+//     Options extends SpreadOptions = DefaultSpreadOptions,
+//     __Options extends Required<Options> = Required<Options>,
+//     __ValuesKeychain extends ValuesKeychain<Values> = ValuesKeychain<Values>,
+//     __RemnantsKeychain extends RemnantsKeychain<__ValuesKeychain> = RemnantsKeychain<__ValuesKeychain>
+//     > = (
+//         __Options["DeepRequired"] extends true
+//         ? DeepRequired<NotRequirableSpread<Values, __Options, __ValuesKeychain, __RemnantsKeychain>>
+//         : NotRequirableSpread<Values, __Options, __ValuesKeychain, __RemnantsKeychain>
+//     );
 
 type test924_0 = ValuesL1<{ a?: "a", b: { a: "a2" }, d?: "d", e: { a: "a3", h: "h", haha?: "lol" } }, { a: undefined, b?: boolean, c?: undefined, e: { a: { b: "b3" } } }>;
 type test924_1 = ValuesKeychain<test924_0>["MutualRequiredKeys"];
-type test924 = Spread<test924_0, { Recursive: true, DeepRequired: true }>;
+type test924 = Spread<test924_0, { Recursive: true }>;
 // type test924 = Spread<ValuesL1<{ a: "test" }, {}>>;
 declare const ctest924: test924;
-// ctest924.
+// ctest924.e.
 
 
 
@@ -644,13 +657,18 @@ interface DefaultPropsIntersectionOptions extends PropsIntersectionOptions {
     ValueOptions: [ValueOptions["ExtractObject"]];
 }
 
+type TestIntersectProps<
+    Options extends PropsIntersectionOptions = DefaultPropsIntersectionOptions,
+    __Options extends Required<Options> = Required<Options>,
+    > = __Options;
+
 /** Intersect only those types that are related to the same property key of object A and B. This function is only applicable on object types. */
 export type IntersectProps<
     Values extends DefaultValues,
     Options extends PropsIntersectionOptions = DefaultPropsIntersectionOptions,
     _ = $,
-    __Options extends Required<PropsIntersectionOptions> = Spread<ValuesL1<PropsIntersectionOptions, {}>>,
-    __Values extends ValuesL0<Values, __Options["ValueOptions"], _> = ValuesL0<Values, Options["ValueOptions"], _>,
+    __Options extends Required<Options> = Required<Options>,
+    __Values extends ValuesL0<Values, __Options["ValueOptions"], _> = ValuesL0<Values, __Options["ValueOptions"], _>,
     __ValuesKeychain extends ValuesKeychain<__Values> = ValuesKeychain<__Values>,
     __LeftMutualPick extends Pick<__Values["LeftContent"], __ValuesKeychain["MutualKeys"]> = Pick<__Values["LeftContent"], __ValuesKeychain["MutualKeys"]>,
     __RightMutualPick extends Pick<__Values["RightContent"], __ValuesKeychain["MutualKeys"]> = Pick<__Values["RightContent"], __ValuesKeychain["MutualKeys"]>
