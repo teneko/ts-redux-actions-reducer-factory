@@ -437,7 +437,7 @@ const test45 = {} as SpreadOptions;
 type test45 = typeof test45["Recursive"];
 // type test46 = Partial<{}>["a"];
 
-// type test34 = unknown extends void ? true: false;
+// type test34 = unknown extends any ? true: false;
 
 type IfOptionalExcludeUndefined<IsOptional extends boolean, T> = IsOptional extends true ? Exclude<T, undefined> : T;
 
@@ -667,9 +667,9 @@ interface DefaultPrimitivesIntersectionOptions extends PrimitivesIntersectionOpt
 /** Intersect only the primitive types of Object A and Object B. */
 export type IntersectPrimitives<
     Values extends DefaultFlankValues,
-    Options extends PrimitivesIntersectionOptions = DefaultPrimitivesIntersectionOptions,
-    // __Options extends PrimitivesIntersectionOptions = SpreadFromContent<DefaultPrimitivesIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }>,
-    __Values extends FlankValuesRenewal<Values, Options["ValueOptions"]> = FlankValuesRenewal<Values, Options["ValueOptions"]>,
+    Options extends Partial<PrimitivesIntersectionOptions> = DefaultPrimitivesIntersectionOptions,
+    __Options extends PrimitivesIntersectionOptions = SpreadFromContent<DefaultPrimitivesIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, PrimitivesIntersectionOptions>,
+    __Values extends FlankValuesRenewal<Values, __Options["ValueOptions"]> = FlankValuesRenewal<Values, __Options["ValueOptions"]>,
     > = (
         Exclude<
             __Values["LeftContent"] | __Values["RightContent"],
@@ -883,10 +883,10 @@ interface DefaultPropsIntersectionOptions extends PropsIntersectionOptions {
 /** Intersect only those types that are related to the same property key of object A and B. This function is only applicable on object types. */
 export type IntersectProps<
     Values extends DefaultFlankValues,
-    Options extends PropsIntersectionOptions = DefaultPropsIntersectionOptions,
+    Options extends Partial<PropsIntersectionOptions> = DefaultPropsIntersectionOptions,
     _ = $,
-    // __Options extends PropsIntersectionOptions = SpreadFromContent<PropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }>,
-    __Values extends FlankValuesRenewal<Values, Options["ValueOptions"], _> = FlankValuesRenewal<Values, Options["ValueOptions"], _>,
+    __Options extends PropsIntersectionOptions = SpreadFromContent<DefaultPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, PropsIntersectionOptions>,
+    __Values extends FlankValuesRenewal<Values, __Options["ValueOptions"], _> = FlankValuesRenewal<Values, __Options["ValueOptions"], _>,
     __ValuesKeychain extends FlankValuesKeychain<__Values> = FlankValuesKeychain<__Values>,
     __LeftMutualPick extends Pick<__Values["LeftContent"], __ValuesKeychain["MutualKeys"]> = Pick<__Values["LeftContent"], __ValuesKeychain["MutualKeys"]>,
     __RightMutualPick extends Pick<__Values["RightContent"], __ValuesKeychain["MutualKeys"]> = Pick<__Values["RightContent"], __ValuesKeychain["MutualKeys"]>
@@ -938,12 +938,12 @@ export type PreferPrimitivesOverEmptyProps<Primitives, Props> = (
 
 export type IntersectPrimitivesAndProps<
     Values extends DefaultFlankValues,
-    Options extends PrimitivesAndPropsIntersectionOptions = DefaultPrimitivesAndPropsIntersectionOptions,
-    // __Options extends PrimitivesAndPropsIntersectionOptions = SpreadFromContent<PrimitivesAndPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }>,
+    Options extends Partial<PrimitivesAndPropsIntersectionOptions> = DefaultPrimitivesAndPropsIntersectionOptions,
+    __Options extends PrimitivesAndPropsIntersectionOptions = SpreadFromContent<DefaultPrimitivesAndPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, PrimitivesAndPropsIntersectionOptions>,
     > = (
         PreferPrimitivesOverEmptyProps<
-            IntersectPrimitives<Values, Options["PrimitiveOptions"]>,
-            IntersectProps<Values, Options["PropsOptions"]>
+            IntersectPrimitives<Values, __Options["PrimitiveOptions"], __Options["PrimitiveOptions"]>,
+            IntersectProps<Values, __Options["PropsOptions"], $, __Options["PropsOptions"]>
         >
     );
 
@@ -957,11 +957,11 @@ type testtt_0_2 = FlankValuesRenewal<testtt_0, ["ExtractObject"]>;
 // type testtt24 = IntersectProps<testtt_0_2>;
 type testtt55 = FlankValuesKeychain<testtt_0_2>;
 
-type testtt_1_1 = SpreadFromContent<DefaultPrimitivesAndPropsIntersectionOptions, { PrimitiveOptions: {} }, { OverwriteMode: "extend", MutualKeySignature: "left" }>;
-declare const testtt_1_1: testtt_1_1;
+// type testtt_1_1 = SpreadFromContent<DefaultPrimitivesAndPropsIntersectionOptions, { PrimitiveOptions: { ValueOptions: [] } }, { OverwriteMode: "extend", MutualKeySignature: "left" }, PrimitivesAndPropsIntersectionOptions>;
+// declare const testtt_1_1: testtt_1_1;
 // testtt_1_1.PrimitiveOptions.
 
-type testtt = IntersectPrimitivesAndProps<testtt_0>;
+// type testtt = IntersectPrimitivesAndProps<testtt_0, { PropsOptions: undefined }>;
 // type testtt = IntersectPrimitivesAndProps<testtt_0>;
 // type testtt_1 = IntersectProps<testtt_0>;
 
