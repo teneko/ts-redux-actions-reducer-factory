@@ -435,6 +435,9 @@ export interface DefaultSpreadOptions extends SpreadOptions {
 
 const test45 = {} as SpreadOptions;
 type test45 = typeof test45["Recursive"];
+// type test46 = Partial<{}>["a"];
+
+// type test34 = unknown extends void ? true: false;
 
 type IfOptionalExcludeUndefined<IsOptional extends boolean, T> = IsOptional extends true ? Exclude<T, undefined> : T;
 
@@ -442,23 +445,29 @@ type IfOptionalExcludeUndefined<IsOptional extends boolean, T> = IsOptional exte
 type SpreadContent<
     LeftContent,
     RightContent,
-    OverwriteMode extends SpreadOptions["OverwriteMode"]
+    OverwriteMode extends SpreadOptions["OverwriteMode"],
+    ComparableContent,
+    __CompareAgainst = (unknown extends ComparableContent
+        ? LeftContent
+        : ComparableContent)
     > = (
         OverwriteMode extends SpreadOptionsOverwriteModes["extend"]
-        ? (RightContent extends LeftContent
+        ? (RightContent extends __CompareAgainst
             ? RightContent
             : LeftContent)
         : RightContent
-    );
+    ) & { _: { left: LeftContent, right: RightContent, comparable_content: ComparableContent, compare_against: __CompareAgainst } };
 
 /** A subtype of `Spread`. Not intended to be called directly. */
 type SpreadProperty<
     Values extends DefaultFlankValues,
     Options extends SpreadOptions,
+    ComparableContent extends DeepStructure<Values["LeftContent"]>,
     ValuesKeychain extends FlankValuesKeychain<Values>,
     MutualKey extends ValuesKeychain["MutualKeys"],
-    __LeftMutualProp = Values["LeftContent"][MutualKey],
-    __RightMutualProp = Values["RightContent"][MutualKey]
+    __ComparableContentByMutualKey = ComparableContent[MutualKey],
+    __LeftPropByMutualKey = Values["LeftContent"][MutualKey],
+    __RightPropByMutualKey = Values["RightContent"][MutualKey]
     > = (
         /* L stands for left content and R for right content */
         If<
@@ -468,16 +477,17 @@ type SpreadProperty<
             SpreadFromContent<
                 IfOptionalExcludeUndefined<
                     Extends<MutualKey, ValuesKeychain["LeftValueKeychain"]["OptionalKeys"]>,
-                    __LeftMutualProp
+                    __LeftPropByMutualKey
                 >,
                 IfOptionalExcludeUndefined<
                     Extends<MutualKey, ValuesKeychain["RightValueKeychain"]["OptionalKeys"]>,
-                    __RightMutualProp
+                    __RightPropByMutualKey
                 >,
-                Options
+                Options,
+                __ComparableContentByMutualKey
             >,
             // ..otherwise we want only the value
-            SpreadContent<__LeftMutualProp, __RightMutualProp, Options["OverwriteMode"]>
+            SpreadContent<__LeftPropByMutualKey, __RightPropByMutualKey, Options["OverwriteMode"], __ComparableContentByMutualKey>
         >
     );
 
@@ -491,6 +501,16 @@ type IsNonArrayObject<T> = (
     : false
 );
 
+type DeepStructure<T> = {
+    [P in keyof T]?: P extends { [K: string]: any } ? DeepStructure<P> : any
+};
+
+// type DeepStructure<T> = (
+//     T extends { [K: string]: any }
+//     ? { [P in keyof T]?: DeepStructure<P> }
+//     : any
+// );
+
 /**
  * Type of { ...L, ...R }
  * Inspired by: https://github.com/Microsoft/TypeScript/pull/21316#issuecomment-359574388
@@ -498,6 +518,7 @@ type IsNonArrayObject<T> = (
 export type Spread<
     Values extends DefaultFlankValues,
     Options extends SpreadOptions = DefaultSpreadOptions,
+    ComparableContent extends DeepStructure<Values["LeftContent"]> = DeepStructure<Values["LeftContent"]>,
     __ValuesKeychain extends FlankValuesKeychain<Values> = FlankValuesKeychain<Values>,
     __RemnantsKeychain extends FlankValuesRemnantKeychain<__ValuesKeychain> = FlankValuesRemnantKeychain<__ValuesKeychain>,
     __KeySignaturesKeychain extends (
@@ -517,7 +538,7 @@ export type Spread<
                 IsNonArrayObject<Values["LeftContent"]>,
                 IsNonArrayObject<Values["RightContent"]>
             >,
-            (
+            ({ _: ComparableContent }
                 // Properties in L, that don't exist in R
                 & Pick<Values["LeftContent"], __RemnantsKeychain["LeftRemnant"]["Keys"]>
                 // Properties in R, that don't exist in L
@@ -529,18 +550,18 @@ export type Spread<
                 // Spread each common properties that are optional
                 & {
                     [P in __KeySignaturesKeychain["OptionalKeys"]]?: (
-                        SpreadProperty<Values, Options, __ValuesKeychain, P>
+                        SpreadProperty<Values, Options, ComparableContent, __ValuesKeychain, P>
                     )
                 }
                 // Spread each common properties that are required
                 & {
                     [P in __KeySignaturesKeychain["RequiredKeys"]]: (
-                        SpreadProperty<Values, Options, __ValuesKeychain, P>
+                        SpreadProperty<Values, Options, ComparableContent, __ValuesKeychain, P>
                     )
                 }
             ),
             // If not, we want only R
-            SpreadContent<Values["LeftContent"], Values["RightContent"], Options["OverwriteMode"]>
+            SpreadContent<Values["LeftContent"], Values["RightContent"], Options["OverwriteMode"], ComparableContent>
         >
     );
 
@@ -548,7 +569,15 @@ export type SpreadFromContent<
     LeftContent extends DefaultValueContent,
     RightContent extends DefaultValueContent,
     Options extends SpreadOptions = DefaultSpreadOptions,
-    > = Spread<FlankValuesFromContent<LeftContent, RightContent>, Options>;
+    ComparableContent extends DeepStructure<LeftContent> = DeepStructure<LeftContent>,
+    > = Spread<FlankValuesFromContent<LeftContent, RightContent>, Options, ComparableContent>;
+
+declare const test3456: SpreadFromContent<DefaultPrimitivesAndPropsIntersectionOptions, {
+    PrimitiveOptions: {
+        ValueOptions: ["ExcludeArray"]
+    }
+}, { OverwriteMode: "extend", MutualKeySignature: "left" }, PrimitivesAndPropsIntersectionOptions>;
+// test3456.PrimitiveOptions.
 
 // export type Spread<
 //     Values extends DefaultValues,
@@ -562,16 +591,16 @@ export type SpreadFromContent<
 //         : NotRequirableSpread<Values, __Options, __ValuesKeychain, __RemnantsKeychain>
 //     );
 
-type test924_0 = FlankValuesFromContent<{ a?: "a", b: { a: "a2" }, d?: "d", e?: { a: "a3", h: "h", haha?: "lol" } }, { a: undefined, b?: boolean, c?: undefined, e: { a: { b: "b3" }, haha: "lol" } }>;
+type test924_0 = FlankValuesFromContent<{ a?: "a", b: { a: "a2" }, d?: "d", e?: { a: "a3", h: { a: "" }, haha?: "lol" } }, { a: undefined, b?: boolean, c?: undefined, e: { a: { a: "a4", b: "b3" }, h: { b: "" }, haha: "lol" } }>;
 // type test924_0 = FlankValuesFromContent<{ d: { c: "c" } }, { d?: { a: "a" } }>;
 // type test924_0 = FlankValuesFromContent<{ d: { c: "c" } }, { d: { a: "a" } | undefined }>;
 // type test924_0 = FlankValuesFromContent<{ d: { c: "c" } }, { d?: { a: "a" } | undefined }>;
 // type test924_0 = FlankValuesFromContent<string[], boolean[]>;
 type test924_1 = FlankValuesKeychain<test924_0>["MutualRequiredKeys"];
-type test924 = Spread<test924_0, { Recursive: true }>;
+type test924 = Spread<test924_0, { Recursive: true, OverwriteMode: "extend" }, { e: { h: { a: "works" } } }>;
 // type test924 = Spread<ValuesL1<{ a: "test" }, {}>>;
 declare const ctest924: test924;
-// ctest924.e.
+// ctest924.e.h.
 
 
 
@@ -638,9 +667,9 @@ interface DefaultPrimitivesIntersectionOptions extends PrimitivesIntersectionOpt
 /** Intersect only the primitive types of Object A and Object B. */
 export type IntersectPrimitives<
     Values extends DefaultFlankValues,
-    Options extends Partial<PrimitivesIntersectionOptions> = DefaultPrimitivesIntersectionOptions,
-    __Options extends PrimitivesIntersectionOptions = SpreadFromContent<PrimitivesIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }>,
-    __Values extends FlankValuesRenewal<Values, __Options["ValueOptions"]> = FlankValuesRenewal<Values, __Options["ValueOptions"]>,
+    Options extends PrimitivesIntersectionOptions = DefaultPrimitivesIntersectionOptions,
+    // __Options extends PrimitivesIntersectionOptions = SpreadFromContent<DefaultPrimitivesIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }>,
+    __Values extends FlankValuesRenewal<Values, Options["ValueOptions"]> = FlankValuesRenewal<Values, Options["ValueOptions"]>,
     > = (
         Exclude<
             __Values["LeftContent"] | __Values["RightContent"],
@@ -854,10 +883,10 @@ interface DefaultPropsIntersectionOptions extends PropsIntersectionOptions {
 /** Intersect only those types that are related to the same property key of object A and B. This function is only applicable on object types. */
 export type IntersectProps<
     Values extends DefaultFlankValues,
-    Options extends Partial<PropsIntersectionOptions> = DefaultPropsIntersectionOptions,
+    Options extends PropsIntersectionOptions = DefaultPropsIntersectionOptions,
     _ = $,
-    __Options extends PropsIntersectionOptions = SpreadFromContent<PropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }>,
-    __Values extends FlankValuesRenewal<Values, __Options["ValueOptions"], _> = FlankValuesRenewal<Values, __Options["ValueOptions"], _>,
+    // __Options extends PropsIntersectionOptions = SpreadFromContent<PropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }>,
+    __Values extends FlankValuesRenewal<Values, Options["ValueOptions"], _> = FlankValuesRenewal<Values, Options["ValueOptions"], _>,
     __ValuesKeychain extends FlankValuesKeychain<__Values> = FlankValuesKeychain<__Values>,
     __LeftMutualPick extends Pick<__Values["LeftContent"], __ValuesKeychain["MutualKeys"]> = Pick<__Values["LeftContent"], __ValuesKeychain["MutualKeys"]>,
     __RightMutualPick extends Pick<__Values["RightContent"], __ValuesKeychain["MutualKeys"]> = Pick<__Values["RightContent"], __ValuesKeychain["MutualKeys"]>
@@ -909,21 +938,14 @@ export type PreferPrimitivesOverEmptyProps<Primitives, Props> = (
 
 export type IntersectPrimitivesAndProps<
     Values extends DefaultFlankValues,
-    Options extends Partial<PrimitivesAndPropsIntersectionOptions> = DefaultPrimitivesAndPropsIntersectionOptions,
-    __Options extends PrimitivesAndPropsIntersectionOptions = SpreadFromContent<PrimitivesAndPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }>,
+    Options extends PrimitivesAndPropsIntersectionOptions = DefaultPrimitivesAndPropsIntersectionOptions,
+    // __Options extends PrimitivesAndPropsIntersectionOptions = SpreadFromContent<PrimitivesAndPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }>,
     > = (
         PreferPrimitivesOverEmptyProps<
-            IntersectPrimitives<Values, __Options["PrimitiveOptions"]>,
-            // IntersectProps<Values, __Options["PropsOptions"], $, __Options["PropsOptions"]>
-            {}
+            IntersectPrimitives<Values, Options["PrimitiveOptions"]>,
+            IntersectProps<Values, Options["PropsOptions"]>
         >
     );
-
-// type test3456 = Spread<DefaultPrimitivesAndPropsIntersectionOptions, {
-//     PrimitiveOptions: {
-//         ValueOptions: ["ExcludeObject"]
-//     }
-// }>;
 
 // declare const tttt: test3456;
 // tttt.PropsOptions.ValueOptions
@@ -939,7 +961,7 @@ type testtt_1_1 = SpreadFromContent<DefaultPrimitivesAndPropsIntersectionOptions
 declare const testtt_1_1: testtt_1_1;
 // testtt_1_1.PrimitiveOptions.
 
-type testtt = IntersectPrimitivesAndProps<testtt_0, { PropsOptions: { ValueOptions: ["ExcludeObject"] } }>;
+type testtt = IntersectPrimitivesAndProps<testtt_0>;
 // type testtt = IntersectPrimitivesAndProps<testtt_0>;
 // type testtt_1 = IntersectProps<testtt_0>;
 
