@@ -639,7 +639,7 @@ interface DefaultPrimitivesIntersectionOptions extends PrimitivesIntersectionOpt
 export type IntersectPrimitives<
     Values extends DefaultFlankValues,
     Options extends Partial<PrimitivesIntersectionOptions> = DefaultPrimitivesIntersectionOptions,
-    __Options extends PrimitivesIntersectionOptions = SpreadFromContent<DefaultPrimitivesIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }>,
+    __Options extends PrimitivesIntersectionOptions = SpreadFromContent<PrimitivesIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }>,
     __Values extends FlankValuesRenewal<Values, __Options["ValueOptions"]> = FlankValuesRenewal<Values, __Options["ValueOptions"]>,
     > = (
         Exclude<
@@ -852,42 +852,41 @@ interface DefaultPropsIntersectionOptions extends PropsIntersectionOptions {
 //     > = __Options;
 
 /** Intersect only those types that are related to the same property key of object A and B. This function is only applicable on object types. */
-export type IntersectProps2<
+export type IntersectProps<
     Values extends DefaultFlankValues,
     Options extends Partial<PropsIntersectionOptions> = DefaultPropsIntersectionOptions,
-    __Options extends PropsIntersectionOptions = SpreadFromContent<DefaultPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }>,
-    __Values extends FlankValuesRenewal<Values, __Options["ValueOptions"]> = FlankValuesRenewal<Values, __Options["ValueOptions"]>,
+    _ = $,
+    __Options extends PropsIntersectionOptions = SpreadFromContent<PropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }>,
+    __Values extends FlankValuesRenewal<Values, __Options["ValueOptions"], _> = FlankValuesRenewal<Values, __Options["ValueOptions"], _>,
     __ValuesKeychain extends FlankValuesKeychain<__Values> = FlankValuesKeychain<__Values>,
-    // __LeftMutualPick extends Pick<__Values["LeftContent"], __ValuesKeychain["MutualKeys"]> = Pick<__Values["LeftContent"], __ValuesKeychain["MutualKeys"]>,
-    __LeftMutualPick extends Pick<__Values["LeftContent"], __ValuesKeychain["MutualKeys"]> = any,
-    // __RightMutualPick extends Pick<__Values["RightContent"], __ValuesKeychain["MutualKeys"]> = Pick<__Values["RightContent"], __ValuesKeychain["MutualKeys"]>
-    > = null;
-// (
-//     TakeFirstIfMatchExtendsNotCase<
-//         __ValuesKeychain["MutualKeys"],
-//         If< // If both picked objects extends each other, then ...
-//             And<Extends<__LeftMutualPick, __RightMutualPick>, Extends<__RightMutualPick, __LeftMutualPick>>,
-//             If<
-//                 /* Overall we want check if smaller fits into bigger */
-//                 And<Extends<__LeftMutualPick, __Values["LeftContent"]>, Extends<__RightMutualPick, __Values["RightContent"]>>,
-//                 __Values["LeftContent"] & __Values["RightContent"],
-//                 If<
-//                     Extends<__LeftMutualPick, __Values["LeftContent"]>,
-//                     __Values["LeftContent"] & __RightMutualPick,
-//                     If<
-//                         Extends<__RightMutualPick, __Values["RightContent"]>,
-//                         __LeftMutualPick & __Values["RightContent"],
-//                         __LeftMutualPick & __RightMutualPick
-//                     >
-//                 >
-//             >,
-//             // never
-//             // .. \/\/ expand here
-//             UnionMutualProps<__Values, __ValuesKeychain> // replace this by a type that expands recursively
-//         >,
-//         never
-//     >
-// );
+    __LeftMutualPick extends Pick<__Values["LeftContent"], __ValuesKeychain["MutualKeys"]> = Pick<__Values["LeftContent"], __ValuesKeychain["MutualKeys"]>,
+    __RightMutualPick extends Pick<__Values["RightContent"], __ValuesKeychain["MutualKeys"]> = Pick<__Values["RightContent"], __ValuesKeychain["MutualKeys"]>
+    > = (
+        TakeFirstIfMatchExtendsNotCase<
+            __ValuesKeychain["MutualKeys"],
+            If< // If both picked objects extends each other, then ...
+                And<Extends<__LeftMutualPick, __RightMutualPick>, Extends<__RightMutualPick, __LeftMutualPick>>,
+                If<
+                    /* Overall we want check if smaller fits into bigger */
+                    And<Extends<__LeftMutualPick, __Values["LeftContent"]>, Extends<__RightMutualPick, __Values["RightContent"]>>,
+                    __Values["LeftContent"] & __Values["RightContent"],
+                    If<
+                        Extends<__LeftMutualPick, __Values["LeftContent"]>,
+                        __Values["LeftContent"] & __RightMutualPick,
+                        If<
+                            Extends<__RightMutualPick, __Values["RightContent"]>,
+                            __LeftMutualPick & __Values["RightContent"],
+                            __LeftMutualPick & __RightMutualPick
+                        >
+                    >
+                >,
+                // never
+                // .. \/\/ expand here
+                UnionMutualProps<__Values, __ValuesKeychain> // replace this by a type that expands recursively
+            >,
+            never
+        >
+    );
 
 export interface PrimitivesAndPropsIntersectionOptions {
     PrimitiveOptions: PrimitivesIntersectionOptions;
@@ -911,11 +910,12 @@ export type PreferPrimitivesOverEmptyProps<Primitives, Props> = (
 export type IntersectPrimitivesAndProps<
     Values extends DefaultFlankValues,
     Options extends Partial<PrimitivesAndPropsIntersectionOptions> = DefaultPrimitivesAndPropsIntersectionOptions,
-    __Options extends PrimitivesAndPropsIntersectionOptions = SpreadFromContent<DefaultPrimitivesAndPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }>,
+    __Options extends PrimitivesAndPropsIntersectionOptions = SpreadFromContent<PrimitivesAndPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }>,
     > = (
         PreferPrimitivesOverEmptyProps<
             IntersectPrimitives<Values, __Options["PrimitiveOptions"]>,
-            IntersectProps<Values, __Options["PropsOptions"]>
+            // IntersectProps<Values, __Options["PropsOptions"], $, __Options["PropsOptions"]>
+            {}
         >
     );
 
@@ -939,7 +939,8 @@ type testtt_1_1 = SpreadFromContent<DefaultPrimitivesAndPropsIntersectionOptions
 declare const testtt_1_1: testtt_1_1;
 // testtt_1_1.PrimitiveOptions.
 
-type testtt = IntersectPrimitivesAndProps<testtt_0, { PrimitiveOptions: { ValueOptions: [] } }>;
+type testtt = IntersectPrimitivesAndProps<testtt_0, { PropsOptions: { ValueOptions: ["ExcludeObject"] } }>;
+// type testtt = IntersectPrimitivesAndProps<testtt_0>;
 // type testtt_1 = IntersectProps<testtt_0>;
 
 
