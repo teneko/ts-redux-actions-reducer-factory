@@ -26,6 +26,10 @@ export type DeepRequired<T> = {
 
 export type PickExcept<T, ExcludedKeys = keyof T> = Pick<T, Exclude<keyof T, ExcludedKeys>>;
 
+export type PickSafe<T, Keys extends keyof T> = Keys extends never ? never : Pick<T, Keys>;
+
+// type test43 = {} extends never ? true : false;
+
 export type NotTypeKeys<T, NotType = never> = Pick<T, { [K in keyof T]: T[K] extends NotType ? never : K }[keyof T]>;
 
 export type IsNotNever<T> = [T] extends [never] ? false : true;
@@ -736,17 +740,34 @@ export type IntersectPrimitives<
         >
     );
 
+export interface DualContentOperations {
+    Intersect: "Intersect";
+    UnionBoth: "UnionBoth";
+    UnionLeft: "UnionLeft";
+    UnionRight: "UnionRight";
+}
+
+export type DualContentOperationKeys = keyof DualContentOperations;
+export type DualContentLeftUnionOperation = DualContentOperations["UnionLeft"] | DualContentOperations["UnionBoth"];
+export type DualContentRightUnionOperation = DualContentOperations["UnionLeft"] | DualContentOperations["UnionBoth"];
+
 export interface MutualPropsUnionOptions {
     Recursive: boolean;
     ContentTransformations: ContentTransformationOrArray;
+    DualContentOperations?: DualContentOperationKeys;
 }
 
 export interface DefaultMutualPropsUnionOptions {
     Recursive: false;
-    ContentTransformations: ContentTransformations["ExtractObject"]
+    ContentTransformations: ContentTransformations["ExtractObject"];
+    DualContentOperations: DualContentOperations["Intersect"]; // TODO: adjust this
 }
 
-export type UnionMutualProps<
+/**
+ * TODO: `IntersectProps<PureDualContent<{ a: { a: "" } }, { a: { a: "", b: "" } }>>` results in `const testtt24: { a: { a: ""; } | { a: ""; b: ""; }; }`
+ * => Deep intersection and side union is required
+ */
+export type UnionProps<
     DualContent extends DefaultDualContent,
     Options extends DeepPartial<MutualPropsUnionOptions> = DefaultMutualPropsUnionOptions,
     _ = $,
@@ -760,28 +781,41 @@ export type UnionMutualProps<
     __MutualOptionalProps = { [K in __ValuesKeychain["MutualOptionalKeys"]]?: __DualContent["LeftContent"][K] | __DualContent["RightContent"][K]; },
     // These are the mutual key properties that are flagged as required
     __MutualRequiredProps = { [K in __ValuesKeychain["MutualRequiredKeys"]]: __DualContent["LeftContent"][K] | __DualContent["RightContent"][K]; },
-    > = (
-        // { _: { AreMutualOptionalKeysNotNever: __ValuesKeychain["MutualOptionalKeys"], AreMutualRequiredKeysNotNever: __ValuesKeychain["MutualRequiredKeys"] } } &
-        If<
-            And<
-                __AreMutualOptionalKeysNotNever,
-                __AreMutualRequiredKeysNotNever
-            >,
-            // We only want combine the optional and required props if both are NOT never..
-            __MutualOptionalProps & __MutualRequiredProps,
-            If<
-                __AreMutualOptionalKeysNotNever,
-                // ..otherwise we only want the optional props
-                __MutualOptionalProps,
+    > = ( // { _: { AreMutualOptionalKeysNotNever: __ValuesKeychain["MutualOptionalKeys"], AreMutualRequiredKeysNotNever: __ValuesKeychain["MutualRequiredKeys"] } } &
+        (__Options["DualContentOperations"] extends DualContentOperations["Intersect"]
+            ? If<
+                And<
+                    __AreMutualOptionalKeysNotNever,
+                    __AreMutualRequiredKeysNotNever
+                >,
+                // We only want combine the optional and required props if both are NOT never..
+                // __MutualOptionalProps & __MutualRequiredProps,
+                __Options["Recursive"] extends true
+                ? "TODO: Here we need to intersect mutual props AND union the remaining props"
+                : __MutualOptionalProps & __MutualRequiredProps,
                 If<
-                    __AreMutualRequiredKeysNotNever,
-                    // ..or the required props
-                    __MutualRequiredProps,
-                    // ..or never
-                    never
+                    __AreMutualOptionalKeysNotNever,
+                    // ..otherwise we only want the optional props
+                    __MutualOptionalProps,
+                    If<
+                        __AreMutualRequiredKeysNotNever,
+                        // ..or the required props
+                        __MutualRequiredProps,
+                        // ..or never
+                        never
+                    >
                 >
             >
-        >
+            : never
+        )
+        | (__Options["DualContentOperations"] extends DualContentLeftUnionOperation
+            ? PickSafe<DualContent["LeftContent"], __ValuesKeychain["LeftValueKeychain"]["Keys"]>
+            : never
+        )
+        | (__Options["DualContentOperations"] extends DualContentRightUnionOperation
+            ? PickSafe<DualContent["RightContent"], __ValuesKeychain["RightValueKeychain"]["Keys"]>
+            : never
+        )
     );
 
 export interface ComparablePropsIntersectionOptions {
@@ -807,8 +841,10 @@ export type IntersectProps<
     // Transformed by options
     __DualContent extends TransformedFlankValues<DualContent, __Options["ContentTransformations"], _> = TransformedFlankValues<DualContent, __Options["ContentTransformations"], _>,
     __ValuesKeychain extends FlankValuesKeychain<__DualContent> = FlankValuesKeychain<__DualContent>,
-    __LeftMutualPick extends Pick<__DualContent["LeftContent"], __ValuesKeychain["MutualKeys"]> = Pick<__DualContent["LeftContent"], __ValuesKeychain["MutualKeys"]>,
-    __RightMutualPick extends Pick<__DualContent["RightContent"], __ValuesKeychain["MutualKeys"]> = Pick<__DualContent["RightContent"], __ValuesKeychain["MutualKeys"]>
+    // __LeftMutualPick extends Pick<__DualContent["LeftContent"], __ValuesKeychain["MutualKeys"]> = Pick<__DualContent["LeftContent"], __ValuesKeychain["MutualKeys"]>,
+    // __RightMutualPick extends Pick<__DualContent["RightContent"], __ValuesKeychain["MutualKeys"]> = Pick<__DualContent["RightContent"], __ValuesKeychain["MutualKeys"]>
+    __LeftMutualPick = Pick<__DualContent["LeftContent"], __ValuesKeychain["MutualKeys"]>,
+    __RightMutualPick = Pick<__DualContent["RightContent"], __ValuesKeychain["MutualKeys"]>
     > = (
         TakeFirstIfMatchExtendsNotCase<
             __ValuesKeychain["MutualKeys"],
@@ -830,7 +866,7 @@ export type IntersectProps<
                 >,
                 // never
                 // .. \/\/ expand here
-                UnionMutualProps<__DualContent, __Options["MutualPropsUnionOptions"], $, __Options["MutualPropsUnionOptions"], __DualContent, __ValuesKeychain> // replace this by a type that expands recursively
+                UnionProps<__DualContent, __Options["MutualPropsUnionOptions"], $, __Options["MutualPropsUnionOptions"], __DualContent, __ValuesKeychain> // replace this by a type that expands recursively
             >,
             never
         >
@@ -878,11 +914,11 @@ export type IntersectPrimitivesAndProps<
 
 // type testtt_0 = PureDualContent<{ a: { a2: { a3: "a3" } }, b: "b" } | number, { a: { a2: { a3: "a3_1" } }, b: "b2" } | number | { d: "d" }>;
 // type testtt_0 = PureDualContent<{ a: { a2: { a3: "a3" } }, b: "b", e: "e" } | number, { a: { a2: { a3: "a3_1" } }, b: "b2", d: "d" } | number>;
-type testtt_0 = PureDualContent<{ a: "" }, { a: "" }>;
+type testtt_0 = PureDualContent<{ a: { a: "" } }, { a: { a: "", b: "" } }>;
 type testtt_0_1 = TransformedFlankValues<testtt_0, ["ExcludeObject"]>;
 type testtt23 = IntersectPrimitives<testtt_0_1>;
 type testtt_0_2 = TransformedFlankValues<testtt_0, ["ExtractObject"]>;
-declare const testtt24: IntersectPrimitivesAndProps<testtt_0>;
+declare const testtt24: IntersectProps<testtt_0>;
 
 
 export interface ArrayIntersectionOptions {
