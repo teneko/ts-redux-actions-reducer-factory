@@ -1,4 +1,4 @@
-import { AnyKeys, ExcludeArray, ExcludeObject, Extends, ExtractObject } from "@teronis/ts-definitions";
+import { AnyKeys, ExcludeArray, ExcludeObject, Extends, ExtractObject, ExtractArray } from "@teronis/ts-definitions";
 import { ActionFunctions } from "redux-actions";
 import { And, If, Not, Or } from "typescript-logic";
 // tslint:disable: interface-name
@@ -84,6 +84,7 @@ export type DefaultValueContent = {};
 
 export interface ContentTransformations {
     ExtractObject: "ExtractObject";
+    ExtractArray: "ExtractArray";
     ExcludeArray: "ExcludeArray";
     ExcludeObject: "ExcludeObject";
 }
@@ -197,15 +198,8 @@ export type $ = {};
 export type ValueContent<
     Content extends DefaultValueContent,
     Transformations extends ContentTransformationOrArray,
-    /**
-     * Only, and just only for having a constraint
-     * that does not extend or expect anything.
-     * With this trick, We can have default
-     * constraints in derived tyes, that would
-     * otherwise cause a circular dependency
-     * error.
-     */
-    Recursive,
+    /** If false `Transformations` won't applied on `Content`. */
+    ProcessTransformations,
     __TransformationArray extends ContentTransformationAsArray<Transformations> = ContentTransformationAsArray<Transformations>
     > = {
         "empty": Content;
@@ -215,6 +209,8 @@ export type ValueContent<
                 ? Content
                 : __TransformationArray[0] extends ContentTransformations["ExtractObject"]
                 ? ExtractObject<Content>
+                : __TransformationArray[0] extends ContentTransformations["ExtractArray"]
+                ? ExtractArray<Content>
                 : __TransformationArray[0] extends ContentTransformations["ExcludeArray"]
                 ? ExcludeArray<Content>
                 : __TransformationArray[0] extends ContentTransformations["ExcludeObject"]
@@ -222,9 +218,9 @@ export type ValueContent<
                 : "Tranformation not implemented")
             : Content,
             DropHead<__TransformationArray>,
-            Recursive
+            ProcessTransformations
         >;
-    }[Recursive extends $ ? (Transformations extends [] ? "empty" : "nonEmpty") : "empty"];
+    }[ProcessTransformations extends $ ? (Transformations extends [] ? "empty" : "nonEmpty") : "empty"];
 
 // type test834 = ValueContent<"string", ValueOptions["ExtractObject"], $>;
 
@@ -798,9 +794,9 @@ export type UnionMutualProps<
     );
 
 export interface SuperPropsIntersectionOptions {
-        ContentTransformations: ContentTransformationOrArray;
-        MutualPropsUnionOptions: MutualPropsUnionOptions;
-    }
+    ContentTransformations: ContentTransformationOrArray;
+    MutualPropsUnionOptions: MutualPropsUnionOptions;
+}
 
 export interface UserPropsIntersectionOptions extends PickExcept<SuperPropsIntersectionOptions, "MutualPropsUnionOptions"> {
     MutualPropsUnionOptions: Pick<MutualPropsUnionOptions, "Recursive">;
@@ -850,8 +846,8 @@ export type IntersectProps<
     );
 
 export interface SuperPrimitivesAndPropsIntersectionOptions {
-        PrimitiveIntersectionOptions: PrimitivesIntersectionOptions;
-        PropsIntersectionOptions: SuperPropsIntersectionOptions;
+    PrimitiveIntersectionOptions: PrimitivesIntersectionOptions;
+    PropsIntersectionOptions: SuperPropsIntersectionOptions;
 }
 
 export interface UserPrimitivesAndPropsIntersectionOptions extends PickExcept<SuperPrimitivesAndPropsIntersectionOptions, "PropsIntersectionOptions"> {
@@ -859,40 +855,71 @@ export interface UserPrimitivesAndPropsIntersectionOptions extends PickExcept<Su
     PropsIntersectionOptions: UserPropsIntersectionOptions;
 }
 
-interface DefaultPrimitivesAndPropsIntersectionOptions extends SuperPrimitivesAndPropsIntersectionOptions {
+export interface DefaultPrimitivesAndPropsIntersectionOptions extends SuperPrimitivesAndPropsIntersectionOptions {
     PrimitiveIntersectionOptions: DefaultPrimitivesIntersectionOptions;
     PropsIntersectionOptions: DefaultPropsIntersectionOptions;
 }
 
-export type PreferPrimitivesOverEmptyProps<Primitives, Props> = (
-    If<
-        // Is true if primitives are *not* never and props are equals {}.
-        And<Not<Extends<Primitives, never>>, And<Extends<Props, {}>, Extends<{}, Props>>>,
-        Primitives,
-        Props | Primitives
-    >
-);
+// export type PreferPrimitivesOverEmptyProps<Primitives, Props> = (
+//     // If<
+//     //     // And<Not<Extends<Primitives, never>>, And<Extends<Props, {}>, Extends<{}, Props>>>,
+//     //     And<Extends<Props, {}>, Extends<{}, Props>>,
+//     //     // Choose primitives if props are equals {}..
+//     //     Primitives,
+//     // ..otherwise union them
+//     Props | Primitives
+//     // >
+// );
 
 export type IntersectPrimitivesAndProps<
     DualContent extends DefaultDualContent,
     Options extends DeepPartial<UserPrimitivesAndPropsIntersectionOptions> = DefaultPrimitivesAndPropsIntersectionOptions,
     __Options extends SuperPrimitivesAndPropsIntersectionOptions = Spread<DefaultPrimitivesAndPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, SuperPrimitivesAndPropsIntersectionOptions>,
     > = (
-        PreferPrimitivesOverEmptyProps<
-            IntersectPrimitives<DualContent, __Options["PrimitiveIntersectionOptions"], __Options["PrimitiveIntersectionOptions"]>,
-            IntersectProps<DualContent, __Options["PropsIntersectionOptions"], $, __Options["PropsIntersectionOptions"]>
-        >
+        // PreferPrimitivesOverEmptyProps<
+        IntersectPrimitives<DualContent, __Options["PrimitiveIntersectionOptions"], __Options["PrimitiveIntersectionOptions"]>
+        | IntersectProps<DualContent, __Options["PropsIntersectionOptions"], $, __Options["PropsIntersectionOptions"]>
+        // >
     );
 
 // declare const tttt: test3456;
 // tttt.PropsOptions.ValueOptions
 
 // type testtt_0 = PureDualContent<{ a: { a2: { a3: "a3" } }, b: "b" } | number, { a: { a2: { a3: "a3_1" } }, b: "b2" } | number | { d: "d" }>;
-type testtt_0 = PureDualContent<{ a: { a2: { a3: "a3" } }, b: "b", e: "e" } | number, { a: { a2: { a3: "a3_1" } }, b: "b2", d: "d" } | number>;
+// type testtt_0 = PureDualContent<{ a: { a2: { a3: "a3" } }, b: "b", e: "e" } | number, { a: { a2: { a3: "a3_1" } }, b: "b2", d: "d" } | number>;
+type testtt_0 = PureDualContent<{ a: "" }, { a: "" }>;
 type testtt_0_1 = TransformedFlankValues<testtt_0, ["ExcludeObject"]>;
 type testtt23 = IntersectPrimitives<testtt_0_1>;
 type testtt_0_2 = TransformedFlankValues<testtt_0, ["ExtractObject"]>;
-declare const testtt24: IntersectProps<testtt_0>;
+declare const testtt24: IntersectPrimitivesAndProps<testtt_0>;
+
+
+export interface ArrayIntersectionOptions {
+    ContentTransformations: ContentTransformationOrArray;
+}
+
+export interface DefaultArrayIntersectionOptions extends ArrayIntersectionOptions {
+    ContentTransformations: ["ExtractArray"];
+}
+
+export type IntersectArray<
+    DualContent extends DefaultDualContent,
+    Options extends DeepPartial<UserPrimitivesAndPropsIntersectionOptions> = DefaultPrimitivesAndPropsIntersectionOptions,
+    __Options extends SuperPrimitivesAndPropsIntersectionOptions = Spread<DefaultPrimitivesAndPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, SuperPrimitivesAndPropsIntersectionOptions>,
+    > = (
+        DualContent["LeftContent"] extends Array<infer LeftArrayTypes>
+        ? DualContent["RightContent"] extends Array<infer RightArrayTypes>
+        ? Array<IntersectPrimitivesAndProps<PureDualContent<LeftArrayTypes, RightArrayTypes>>>
+        : never
+        : never
+    );
+
+// type test56_0 = Exclude {} | (number | string | { a: "a2" })[]
+type test56 = PureDualContent<string | (string | { a: "a" })[], {} | (number | string | { a: "a2" })[]>;
+declare const test56: IntersectArray<test56>;
+
+
+
 // declare const testtt24: IntersectProps<testtt_0>;
 // testtt24.
 // type testtt55 = FlankValuesKeychain<testtt_0_2>;
