@@ -275,10 +275,10 @@ export type ValueContent<
 
 export type Value<
     Content extends DefaultValueContent,
-    Options extends ContentTransformationOrArray = DefaultContentTransformation,
+    ContentTransformations extends ContentTransformationOrArray = DefaultContentTransformation,
     _ = $,
     > = {
-        Content: ValueContent<Content, Options, _>;
+        Content: ValueContent<Content, ContentTransformations, _>;
     };
 
 // type testttt = Value<string | "test" | any[] | { a: "a" }, ["ExcludeArray", "ExcludeObject"]>["Content"];
@@ -307,12 +307,12 @@ type DefaultValueL2<_ = $> = Value<DefaultValueContent, DefaultContentTransforma
 // }
 
 export interface FlankValues<
-    LeftValueOrContent extends DefaultValueL2<_> | DefaultValueContent,
-    RightValueOrContent extends DefaultValueL2<_> | DefaultValueContent,
-    Options extends ContentTransformationOrArray = DefaultContentTransformation,
+    Left extends DefaultValue | DefaultValueContent,
+    Right extends DefaultValue | DefaultValueContent,
+    ContentTransformations extends ContentTransformationOrArray = DefaultContentTransformation,
     _ = $,
-    __LeftValue extends DefaultValue = LeftValueOrContent extends DefaultValueL2<_> ? LeftValueOrContent : Value<LeftValueOrContent, Options>,
-    __RightValue extends DefaultValue = RightValueOrContent extends DefaultValueL2<_> ? RightValueOrContent : Value<RightValueOrContent, Options>
+    __LeftValue extends DefaultValue = Left extends DefaultValue ? Left : Value<Left, ContentTransformations, _>,
+    __RightValue extends DefaultValue = Right extends DefaultValue ? Right : Value<Right, ContentTransformations, _>
     > {
     LeftValue: __LeftValue;
     RightValue: __RightValue;
@@ -320,36 +320,84 @@ export interface FlankValues<
     RightContent: __RightValue["Content"];
 }
 
-// type test363 = FlankValues<{ Content: "" }, { Content: "" }>;
+type DefaultFlankValues<_ = $> = FlankValues<DefaultValue | DefaultContentTransformation, DefaultValue | DefaultContentTransformation, DefaultContentTransformation, _>;
 
-export type FlankValuesFromContent<
-    LeftContent extends DefaultValueContent,
-    RightContent extends DefaultValueContent,
-    Options extends ContentTransformationOrArray = DefaultContentTransformation,
-    _ = $
-    > = (
-        FlankValues<
-            Value<LeftContent, Options, _>,
-            Value<RightContent, Options, _>,
-            _
-        >
-    );
+// export type FlankValues<
+//     LeftContent extends DefaultValueContent,
+//     RightContent extends DefaultValueContent,
+//     Options extends ContentTransformationOrArray = DefaultContentTransformation,
+//     _ = $
+//     > = (
+//         FlankValues<
+//             Value<LeftContent, Options, _>,
+//             Value<RightContent, Options, _>,
+//             _
+//         >
+//     );
 
 /** Use this, when you want to overwrite the options. */
-export type FlankValuesRenewal<
-    Values extends FlankValues<DefaultValueL2<_>, DefaultValueL2<_>>,
-    Options extends ContentTransformationOrArray = DefaultContentTransformation,
-    _ = $,
+// export type FlankValuesRenewal<
+//     ValuesOrLeft extends DefaultFlankValues,
+//     ContentTransformations extends ContentTransformationOrArray = DefaultContentTransformation,
+//     _ = $,
+//     > = (
+//         FlankValues<
+//             ValuesOrLeft["LeftContent"],
+//             ValuesOrLeft["RightContent"],
+//             ContentTransformations,
+//             _
+//         >
+//     );
+
+type ValueContentOrContent<T> = T extends DefaultValue ? T["Content"] : T;
+
+type FlankValuesContentOrValueContentOrContent<
+    T extends (
+        DefaultFlankValues
+        | DefaultValue
+        | DefaultValueContent),
+    K extends keyof DefaultFlankValues,
+    T2,
     > = (
-        FlankValuesFromContent<
-            Values["LeftContent"],
-            Values["RightContent"],
-            Options,
+        T extends DefaultFlankValues
+        ? T[K]
+        : ValueContentOrContent<T>
+    );
+
+/** Use this, when you want to renew the options. */
+export type FlankValuesRenewal<
+    ValuesOrLeft extends DefaultFlankValues | DefaultValue | DefaultValueContent,
+    ContentTransformations extends ContentTransformationOrArray,
+    Right extends DefaultValue | DefaultValueContent | void = void,
+    _ = $,
+    __DoesExtendDefaultFlankValues = ValuesOrLeft extends DefaultFlankValues ? unknown extends Right ? true : false : false,
+    > = (
+        FlankValues<
+            __DoesExtendDefaultFlankValues extends true
+            ? (ValuesOrLeft extends DefaultFlankValues
+                ? ValuesOrLeft["LeftContent"]
+                : never)
+            : ValuesOrLeft extends DefaultValue
+            ? ValuesOrLeft["Content"]
+            : ValuesOrLeft,
+            __DoesExtendDefaultFlankValues extends true
+            ? (ValuesOrLeft extends DefaultFlankValues
+                ? ValuesOrLeft["RightContent"]
+                : never)
+            : Right extends DefaultValue
+            ? Right["Content"]
+            : Right extends DefaultValueContent
+            ? Right
+            : never,
+            ContentTransformations,
             _
         >
     );
 
-type DefaultFlankValues<_ = $> = FlankValues<DefaultValue, DefaultValue, DefaultContentTransformation, _>;
+declare const test363: FlankValuesRenewal<"", ["ExtractObject"], { a: "b" }>;
+type tes23t = typeof test363.LeftContent;
+
+// type test363 = [void] extends [unknown] ? true : false;
 
 /**
  * Get the optional keys from an object.
@@ -545,7 +593,7 @@ export type Spread<
     RightContent extends DefaultValueContent,
     Options extends SpreadOptions = DefaultSpreadOptions,
     ComparableContent extends DeepStructure<LeftContent> = DeepStructure<LeftContent>,
-    __Values extends FlankValuesFromContent<LeftContent, RightContent> = FlankValuesFromContent<LeftContent, RightContent>,
+    __Values extends FlankValues<LeftContent, RightContent> = FlankValues<LeftContent, RightContent>,
     __ValuesKeychain extends FlankValuesKeychain<__Values> = FlankValuesKeychain<__Values>,
     __RemnantsKeychain extends FlankValuesRemnantKeychain<__ValuesKeychain> = FlankValuesRemnantKeychain<__ValuesKeychain>,
     __KeySignaturesKeychain extends (
@@ -611,7 +659,7 @@ declare const test3456: Spread<DefaultPrimitivesAndPropsIntersectionOptions, {
 //         : NotRequirableSpread<Values, __Options, __ValuesKeychain, __RemnantsKeychain>
 //     );
 
-type test924_0 = FlankValuesFromContent<{ a?: "a", b: { a: "a2" }, d?: "d", e?: { a: "a3", h: { a: "" }, haha?: "lol" } }, { a: undefined, b?: boolean, c?: undefined, e: { a: { a: "a4", b: "b3" }, h: { b: "" }, haha: "lol" } }>;
+type test924_0 = FlankValues<{ a?: "a", b: { a: "a2" }, d?: "d", e?: { a: "a3", h: { a: "" }, haha?: "lol" } }, { a: undefined, b?: boolean, c?: undefined, e: { a: { a: "a4", b: "b3" }, h: { b: "" }, haha: "lol" } }>;
 // type test924_0 = FlankValuesFromContent<{ d: { c: "c" } }, { d?: { a: "a" } }>;
 // type test924_0 = FlankValuesFromContent<{ d: { c: "c" } }, { d: { a: "a" } | undefined }>;
 // type test924_0 = FlankValuesFromContent<{ d: { c: "c" } }, { d?: { a: "a" } | undefined }>;
@@ -793,6 +841,10 @@ interface ValueKeychain<
     RequiredKeys: __RequiredKeys;
     Keys: __OptionalKeys | __RequiredKeys;
 }
+type ValueKeychain2<
+    ValueOrContent extends DefaultValue | DefaultValueContent,
+    __Content = ValueOrContent extends DefaultValue ? ValueOrContent["Content"] : ValueOrContent,
+    > = ValueKeychain<__Content>;
 
 // __test extends Pick<__LR4Primitives["LeftContent"], ValueKeychain<__LR4Primitives["LeftValue"]>["Keys"]> = any
 
@@ -829,12 +881,27 @@ interface FlankValuesKeychain<
 }
 
 interface FlankValuesKeychain2<
-    ValuesOrLeftValue extends DefaultFlankValues | DefaultValueContent,
-    // __LeftKeychain extends (ValuesOrLeftValue extends DefaultFlankValues ? ValueKeychain<ValuesOrLeftValue["LeftContent"]> : {}) | DefaultFlankValues = (ValuesOrLeftValue extends DefaultFlankValues ? ValueKeychain<ValuesOrLeftValue["LeftContent"]> : {}) | DefaultFlankValues,
-    RightValue extends DefaultValueContent = ValuesOrLeftValue extends DefaultFlankValues ? ValuesOrLeftValue["RightContent"] : DefaultValueContent,
-    __LeftValue = ValuesOrLeftValue extends DefaultFlankValues ? ValuesOrLeftValue["LeftContent"] : ValuesOrLeftValue,
-    __LeftKeychain extends ValueKeychain<__LeftValue> = ValueKeychain<__LeftValue>,
-    __RightKeychain extends ValueKeychain<RightValue> = ValueKeychain<RightValue>
+    ValuesOrLeft extends DefaultFlankValues | DefaultValue | DefaultValueContent,
+    RightContent extends DefaultValueContent = ValuesOrLeft extends DefaultFlankValues ? ValuesOrLeft["RightContent"] : DefaultValueContent,
+    __LeftContent = ValuesOrLeft extends DefaultFlankValues ? ValuesOrLeft["LeftContent"] : ValuesOrLeft,
+    __LeftKeychain extends ValueKeychain<__LeftContent> = ValueKeychain<__LeftContent>,
+    __RightKeychain extends ValueKeychain<RightContent> = ValueKeychain<RightContent>
+    > {
+    LeftValueKeychain: __LeftKeychain;
+    RightValueKeychain: __RightKeychain;
+    OptionalKeys: __LeftKeychain["OptionalKeys"] | __RightKeychain["OptionalKeys"];
+    RequiredKeys: __LeftKeychain["RequiredKeys"] | __RightKeychain["RequiredKeys"];
+    Keys: __LeftKeychain["Keys"] | __RightKeychain["Keys"];
+    MutualOptionalKeys: __LeftKeychain["OptionalKeys"] & __RightKeychain["OptionalKeys"];
+    MutualRequiredKeys: __LeftKeychain["RequiredKeys"] & __RightKeychain["RequiredKeys"];
+    MutualKeys: __LeftKeychain["Keys"] & __RightKeychain["Keys"];
+}
+
+interface FlankValuesKeychain3<
+    LeftContent extends DefaultValueContent,
+    RightContent extends DefaultValueContent,
+    __LeftKeychain extends ValueKeychain<LeftContent> = ValueKeychain<LeftContent>,
+    __RightKeychain extends ValueKeychain<RightContent> = ValueKeychain<RightContent>
     > {
     LeftValueKeychain: __LeftKeychain;
     RightValueKeychain: __RightKeychain;
@@ -866,7 +933,7 @@ export interface FlankValuesRemnantKeychain<
     RightRemnant: ValueRemnantKeychain<ValuesKeychain, ValuesKeychain["LeftValueKeychain"]>;
 }
 
-type test637 = FlankValuesKeychain<FlankValuesFromContent<{ b: "a" }, { b: "b" }>>;
+type test637 = FlankValuesKeychain<FlankValues<{ b: "a" }, { b: "b" }>>;
 type test638 = ValueRemnantKeychain<test637, test637["RightValueKeychain"]>["Keys"];
 
 export interface MutualPropsUnionOptions {
@@ -913,7 +980,7 @@ export type IntersectProps<
     Options extends Partial<PropsIntersectionOptions> = DefaultPropsIntersectionOptions,
     _ = $,
     __Options extends PropsIntersectionOptions = Spread<DefaultPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, PropsIntersectionOptions>,
-    __Values extends FlankValuesRenewal<Values, __Options["ContentTransformations"], _> = FlankValuesRenewal<Values, __Options["ContentTransformations"], _>,
+    __Values extends FlankValuesRenewal<Values, __Options["ContentTransformations"], void, _> = FlankValuesRenewal<Values, __Options["ContentTransformations"], void, _>,
     __ValuesKeychain extends FlankValuesKeychain<__Values> = FlankValuesKeychain<__Values>,
     __LeftMutualPick extends Pick<__Values["LeftContent"], __ValuesKeychain["MutualKeys"]> = Pick<__Values["LeftContent"], __ValuesKeychain["MutualKeys"]>,
     __RightMutualPick extends Pick<__Values["RightContent"], __ValuesKeychain["MutualKeys"]> = Pick<__Values["RightContent"], __ValuesKeychain["MutualKeys"]>
@@ -977,7 +1044,7 @@ export type IntersectPrimitivesAndProps<
 // declare const tttt: test3456;
 // tttt.PropsOptions.ValueOptions
 
-type testtt_0 = FlankValuesFromContent<{ a: "a", b: "b" } | number, { a: "a", b: "b2" } | number>;
+type testtt_0 = FlankValues<{ a: "a", b: "b" } | number, { a: "a", b: "b2" } | number>;
 type testtt_0_1 = FlankValuesRenewal<testtt_0, ["ExcludeObject"]>;
 type testtt23 = IntersectPrimitives<testtt_0_1>;
 type testtt_0_2 = FlankValuesRenewal<testtt_0, ["ExtractObject"]>;
@@ -1162,7 +1229,7 @@ type test2 = typeof ctest;
 
 type test3 = AnyKeys<ITest> & AnyKeys<test_2>;
 
-type gh = IntersectProps<FlankValuesFromContent<{ a2: "a" }, { a: "b" }>>;
+type gh = IntersectProps<FlankValues<{ a2: "a" }, { a: "b" }>>;
 
 // type gh = IntersectArrays<string[], string[], DefaultExpandMode>;
 // type gj = string extends never ? true : false;
