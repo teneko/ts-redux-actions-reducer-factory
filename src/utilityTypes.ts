@@ -24,6 +24,8 @@ export type DeepRequired<T> = {
     )
 };
 
+export type PickExcept<T, ExcludedKeys = keyof T> = Pick<T, Exclude<keyof T, ExcludedKeys>>;
+
 export type NotTypeKeys<T, NotType = never> = Pick<T, { [K in keyof T]: T[K] extends NotType ? never : K }[keyof T]>;
 
 export type IsNotNever<T> = [T] extends [never] ? false : true;
@@ -509,7 +511,7 @@ declare const test3456: Spread<DefaultPrimitivesAndPropsIntersectionOptions, {
     PrimitiveIntersectionOptions?: {
         ValueOptions: undefined,
     },
-}, { OverwriteMode: "extend", MutualKeySignature: "left" }, PrimitivesAndPropsIntersectionOptions>; // { OverwriteMode: "extend", MutualKeySignature: "left" }
+}, { OverwriteMode: "extend", MutualKeySignature: "left" }, SuperPrimitivesAndPropsIntersectionOptions>; // { OverwriteMode: "extend", MutualKeySignature: "left" }
 // test3456.PrimitiveIntersectionOptions.
 
 type test924_0 = PureDualContent<{ a?: "a", b: { a: "a2" }, d?: "d", e?: { a: "a3", h: { a: "" }, haha?: "lol" } }, { a: undefined, b?: boolean, c?: undefined, e: { a: { a: "a4", b: "b3" }, h: { b: "" }, haha: "lol" } }>;
@@ -737,7 +739,7 @@ interface DefaultPrimitivesIntersectionOptions extends PrimitivesIntersectionOpt
 /** Intersect only the primitive types of Object A and Object B. */
 export type IntersectPrimitives<
     DualContent extends DefaultDualContent,
-    Options extends Partial<PrimitivesIntersectionOptions> = DefaultPrimitivesIntersectionOptions,
+    Options extends DeepPartial<PrimitivesIntersectionOptions> = DefaultPrimitivesIntersectionOptions,
     __Options extends PrimitivesIntersectionOptions = Spread<DefaultPrimitivesIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, PrimitivesIntersectionOptions>,
     __Values extends TransformedFlankValues<DualContent, __Options["ContentTransformations"]> = TransformedFlankValues<DualContent, __Options["ContentTransformations"]>,
     > = (
@@ -759,7 +761,7 @@ export interface DefaultMutualPropsUnionOptions {
 
 export type UnionMutualProps<
     DualContent extends DefaultDualContent,
-    Options extends Partial<MutualPropsUnionOptions> = DefaultMutualPropsUnionOptions,
+    Options extends DeepPartial<MutualPropsUnionOptions> = DefaultMutualPropsUnionOptions,
     _ = $,
     __Options extends MutualPropsUnionOptions = Spread<DefaultMutualPropsUnionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, MutualPropsUnionOptions>,
     // Transformed by options
@@ -786,7 +788,7 @@ export type UnionMutualProps<
                 __MutualOptionalProps,
                 If<
                     __AreMutualRequiredKeysNotNever,
-                    // ..the required props
+                    // ..or the required props
                     __MutualRequiredProps,
                     // ..or never
                     never
@@ -795,12 +797,16 @@ export type UnionMutualProps<
         >
     );
 
-export interface PropsIntersectionOptions {
-    ContentTransformations: ContentTransformationOrArray;
-    MutualPropsUnionOptions: MutualPropsUnionOptions;
+export interface SuperPropsIntersectionOptions {
+        ContentTransformations: ContentTransformationOrArray;
+        MutualPropsUnionOptions: MutualPropsUnionOptions;
+    }
+
+export interface UserPropsIntersectionOptions extends PickExcept<SuperPropsIntersectionOptions, "MutualPropsUnionOptions"> {
+    MutualPropsUnionOptions: Pick<MutualPropsUnionOptions, "Recursive">;
 }
 
-interface DefaultPropsIntersectionOptions extends PropsIntersectionOptions {
+interface DefaultPropsIntersectionOptions extends SuperPropsIntersectionOptions {
     ContentTransformations: [ContentTransformations["ExtractObject"]];
     MututalPropsOptions: DefaultMutualPropsUnionOptions;
 }
@@ -808,9 +814,9 @@ interface DefaultPropsIntersectionOptions extends PropsIntersectionOptions {
 /** Intersect only those types that are related to the same property key of object A and B. This function is only applicable on object types. */
 export type IntersectProps<
     DualContent extends DefaultDualContent,
-    Options extends DeepPartial<PropsIntersectionOptions> = DefaultPropsIntersectionOptions,
+    Options extends DeepPartial<UserPropsIntersectionOptions> = DefaultPropsIntersectionOptions,
     _ = $,
-    __Options extends PropsIntersectionOptions = Spread<DefaultPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, PropsIntersectionOptions>,
+    __Options extends SuperPropsIntersectionOptions = Spread<DefaultPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, SuperPropsIntersectionOptions>,
     // Transformed by options
     __DualContent extends TransformedFlankValues<DualContent, __Options["ContentTransformations"], _> = TransformedFlankValues<DualContent, __Options["ContentTransformations"], _>,
     __ValuesKeychain extends FlankValuesKeychain<__DualContent> = FlankValuesKeychain<__DualContent>,
@@ -843,12 +849,17 @@ export type IntersectProps<
         >
     );
 
-export interface PrimitivesAndPropsIntersectionOptions {
-    PrimitiveIntersectionOptions: PrimitivesIntersectionOptions;
-    PropsIntersectionOptions: PropsIntersectionOptions;
+export interface SuperPrimitivesAndPropsIntersectionOptions {
+        PrimitiveIntersectionOptions: PrimitivesIntersectionOptions;
+        PropsIntersectionOptions: SuperPropsIntersectionOptions;
 }
 
-interface DefaultPrimitivesAndPropsIntersectionOptions extends PrimitivesAndPropsIntersectionOptions {
+export interface UserPrimitivesAndPropsIntersectionOptions extends PickExcept<SuperPrimitivesAndPropsIntersectionOptions, "PropsIntersectionOptions"> {
+    PrimitiveIntersectionOptions: PrimitivesIntersectionOptions;
+    PropsIntersectionOptions: UserPropsIntersectionOptions;
+}
+
+interface DefaultPrimitivesAndPropsIntersectionOptions extends SuperPrimitivesAndPropsIntersectionOptions {
     PrimitiveIntersectionOptions: DefaultPrimitivesIntersectionOptions;
     PropsIntersectionOptions: DefaultPropsIntersectionOptions;
 }
@@ -864,8 +875,8 @@ export type PreferPrimitivesOverEmptyProps<Primitives, Props> = (
 
 export type IntersectPrimitivesAndProps<
     DualContent extends DefaultDualContent,
-    Options extends Partial<PrimitivesAndPropsIntersectionOptions> = DefaultPrimitivesAndPropsIntersectionOptions,
-    __Options extends PrimitivesAndPropsIntersectionOptions = Spread<DefaultPrimitivesAndPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, PrimitivesAndPropsIntersectionOptions>,
+    Options extends DeepPartial<UserPrimitivesAndPropsIntersectionOptions> = DefaultPrimitivesAndPropsIntersectionOptions,
+    __Options extends SuperPrimitivesAndPropsIntersectionOptions = Spread<DefaultPrimitivesAndPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, SuperPrimitivesAndPropsIntersectionOptions>,
     > = (
         PreferPrimitivesOverEmptyProps<
             IntersectPrimitives<DualContent, __Options["PrimitiveIntersectionOptions"], __Options["PrimitiveIntersectionOptions"]>,
@@ -881,9 +892,9 @@ type testtt_0 = PureDualContent<{ a: { a2: { a3: "a3" } }, b: "b", e: "e" } | nu
 type testtt_0_1 = TransformedFlankValues<testtt_0, ["ExcludeObject"]>;
 type testtt23 = IntersectPrimitives<testtt_0_1>;
 type testtt_0_2 = TransformedFlankValues<testtt_0, ["ExtractObject"]>;
-declare const testtt24: IntersectProps<testtt_0, { MutualPropsUnionOptions: { Recursive: true } }>;
+declare const testtt24: IntersectProps<testtt_0>;
 // declare const testtt24: IntersectProps<testtt_0>;
-// testtt24._.
+// testtt24.
 // type testtt55 = FlankValuesKeychain<testtt_0_2>;
 
 // type testtt_1_1 = SpreadFromContent<DefaultPrimitivesAndPropsIntersectionOptions, { PrimitiveOptions: { ValueOptions: [] } }, { OverwriteMode: "extend", MutualKeySignature: "left" }, PrimitivesAndPropsIntersectionOptions>;
