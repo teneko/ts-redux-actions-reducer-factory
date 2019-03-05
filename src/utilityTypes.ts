@@ -24,11 +24,21 @@ export type DeepRequired<T> = {
     )
 };
 
+type Intersect<A, B> = (
+    [A] extends [never]
+    // Take B, whatever it is
+    ? B
+    // A NOT never
+    : ([B] extends [never]
+        // Take A
+        ? A
+        // Take A & B
+        : A & B)
+);
+
 export type PickExcept<T, ExcludedKeys = keyof T> = Pick<T, Exclude<keyof T, ExcludedKeys>>;
 
-export type PickSafe<T, Keys extends keyof T> = Keys extends never ? never : Pick<T, Keys>;
-
-// type test43 = {} extends never ? true : false;
+export type PickSafe<T, Keys extends keyof T> = [Keys] extends [never] ? never : Pick<T, Keys>;
 
 export type NotTypeKeys<T, NotType = never> = Pick<T, { [K in keyof T]: T[K] extends NotType ? never : K }[keyof T]>;
 
@@ -653,14 +663,14 @@ export interface SingleRemnantKeychain<
     > {
     OptionalKeys: Exclude<DualKeychain["OptionalKeys"], SingleKeychain["OptionalKeys"]>;
     RequiredKeys: Exclude<DualKeychain["RequiredKeys"], SingleKeychain["RequiredKeys"]>;
-    Keys: Exclude<DualKeychain["Keys"], SingleKeychain["Keys"]>;
+    Keys: Exclude<SingleKeychain["Keys"], DualKeychain["MutualKeys"]>;
 }
 
 export interface DualRemnantKeychain<
-    ValuesKeychain extends DefaultDualKeychain
+    DualContentKeychain extends DefaultDualKeychain
     > {
-    LeftRemnant: SingleRemnantKeychain<ValuesKeychain, ValuesKeychain["RightValueKeychain"]>;
-    RightRemnant: SingleRemnantKeychain<ValuesKeychain, ValuesKeychain["LeftValueKeychain"]>;
+    LeftRemnant: SingleRemnantKeychain<DualContentKeychain, DualContentKeychain["LeftValueKeychain"]>;
+    RightRemnant: SingleRemnantKeychain<DualContentKeychain, DualContentKeychain["RightValueKeychain"]>;
 }
 
 type test637 = FlankValuesKeychain<PureDualContent<{ b: "a" }, { b: "b" }>>;
@@ -740,141 +750,140 @@ export type IntersectPrimitives<
         >
     );
 
-export interface DualContentOperations {
+export interface MixtureOperations {
     Intersect: "Intersect";
     UnionBoth: "UnionBoth";
     UnionLeft: "UnionLeft";
     UnionRight: "UnionRight";
 }
 
-export type DualContentOperationKeys = keyof DualContentOperations;
-export type DualContentLeftUnionOperation = DualContentOperations["UnionLeft"] | DualContentOperations["UnionBoth"];
-export type DualContentRightUnionOperation = DualContentOperations["UnionLeft"] | DualContentOperations["UnionBoth"];
+export type MixtureOperationKeys = keyof MixtureOperations;
+export type MixtureLeftUnionOperation = MixtureOperations["UnionLeft"] | MixtureOperations["UnionBoth"];
+export type MixtureRightUnionOperation = MixtureOperations["UnionLeft"] | MixtureOperations["UnionBoth"];
 
-export interface MutualPropsUnionOptions {
-    Recursive: boolean;
+// export interface MutualPropsUnionOptions {
+//     Recursive: boolean;
+//     ContentTransformations: ContentTransformationOrArray;
+//     DualContentOperations?: DualContentOperationKeys;
+// }
+
+// export interface DefaultMutualPropsUnionOptions {
+//     Recursive: false;
+//     ContentTransformations: ContentTransformations["ExtractObject"];
+//     DualContentOperations: DualContentOperations["Intersect"]; // TODO: adjust this
+// }
+
+// export interface ComparablePropsIntersectionOptions {
+//     ContentTransformations: ContentTransformationOrArray;
+//     // MutualPropsUnionOptions: MutualPropsUnionOptions;
+// }
+
+// export interface PropsIntersectionOptions extends PickExcept<ComparablePropsIntersectionOptions, "MutualPropsUnionOptions"> {
+export interface PropsIntersectionOptions {
     ContentTransformations: ContentTransformationOrArray;
-    DualContentOperations?: DualContentOperationKeys;
+    Recursive: boolean;
+    // MutualPropsUnionOptions: PickExcept<MutualPropsUnionOptions, "ContentTransformations">;
+    MixtureOperations: MixtureOperationKeys;
 }
 
-export interface DefaultMutualPropsUnionOptions {
+interface DefaultPropsIntersectionOptions extends PropsIntersectionOptions {
+    ContentTransformations: ["ExtractObject", "ExcludeArray"];
     Recursive: false;
-    ContentTransformations: ContentTransformations["ExtractObject"];
-    DualContentOperations: DualContentOperations["Intersect"]; // TODO: adjust this
+    // MututalPropsOptions: DefaultMutualPropsUnionOptions;
+    // DualContentOperations: DualContentOperations["Intersect"]; // TODO: adjust this
+    MixtureOperations: MixtureOperationKeys;
 }
 
 /**
  * TODO: `IntersectProps<PureDualContent<{ a: { a: "" } }, { a: { a: "", b: "" } }>>` results in `const testtt24: { a: { a: ""; } | { a: ""; b: ""; }; }`
  * => Deep intersection and side union is required
  */
-export type UnionProps<
+/** A subtype of `PropsMixture`. Not intended to be called directly. */
+type IntersectMutualProps<
     DualContent extends DefaultDualContent,
-    Options extends DeepPartial<MutualPropsUnionOptions> = DefaultMutualPropsUnionOptions,
-    _ = $,
-    __Options extends MutualPropsUnionOptions = Spread<DefaultMutualPropsUnionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, MutualPropsUnionOptions>,
-    // Transformed by options
-    __DualContent extends DualContent | PureFlankValues<DualContent> = TransformedFlankValues<DualContent, __Options["ContentTransformations"], _>,
-    __ValuesKeychain extends FlankValuesKeychain<__DualContent> = FlankValuesKeychain<__DualContent>,
-    __AreMutualOptionalKeysNotNever extends Not<Extends<__ValuesKeychain["MutualOptionalKeys"], never>> = Not<Extends<__ValuesKeychain["MutualOptionalKeys"], never>>,
-    __AreMutualRequiredKeysNotNever extends Not<Extends<__ValuesKeychain["MutualRequiredKeys"], never>> = Not<Extends<__ValuesKeychain["MutualRequiredKeys"], never>>,
+    Options extends DeepPartial<PropsIntersectionOptions>,
+    DualContentKeychain extends FlankValuesKeychain<DualContent> = FlankValuesKeychain<DualContent>,
+    // __AreMutualOptionalKeysNotNever extends Not<Extends<DualContentKeychain["MutualOptionalKeys"], never>> = Not<Extends<DualContentKeychain["MutualOptionalKeys"], never>>,
+    // __AreMutualRequiredKeysNotNever extends Not<Extends<DualContentKeychain["MutualRequiredKeys"], never>> = Not<Extends<DualContentKeychain["MutualRequiredKeys"], never>>,
     // These are the mutual key properties that are flagged as optional
-    __MutualOptionalProps = { [K in __ValuesKeychain["MutualOptionalKeys"]]?: __DualContent["LeftContent"][K] | __DualContent["RightContent"][K]; },
+    __MutualOptionalProps = { [K in DualContentKeychain["MutualOptionalKeys"]]?: DualContent["LeftContent"][K] | DualContent["RightContent"][K]; },
     // These are the mutual key properties that are flagged as required
-    __MutualRequiredProps = { [K in __ValuesKeychain["MutualRequiredKeys"]]: __DualContent["LeftContent"][K] | __DualContent["RightContent"][K]; },
+    __MutualRequiredProps = { [K in DualContentKeychain["MutualRequiredKeys"]]: DualContent["LeftContent"][K] | DualContent["RightContent"][K]; },
     > = ( // { _: { AreMutualOptionalKeysNotNever: __ValuesKeychain["MutualOptionalKeys"], AreMutualRequiredKeysNotNever: __ValuesKeychain["MutualRequiredKeys"] } } &
-        (__Options["DualContentOperations"] extends DualContentOperations["Intersect"]
-            ? If<
-                And<
-                    __AreMutualOptionalKeysNotNever,
-                    __AreMutualRequiredKeysNotNever
-                >,
-                // We only want combine the optional and required props if both are NOT never..
-                // __MutualOptionalProps & __MutualRequiredProps,
-                __Options["Recursive"] extends true
-                ? "TODO: Here we need to intersect mutual props AND union the remaining props"
-                : __MutualOptionalProps & __MutualRequiredProps,
-                If<
-                    __AreMutualOptionalKeysNotNever,
-                    // ..otherwise we only want the optional props
-                    __MutualOptionalProps,
-                    If<
-                        __AreMutualRequiredKeysNotNever,
-                        // ..or the required props
-                        __MutualRequiredProps,
-                        // ..or never
-                        never
-                    >
-                >
-            >
-            : never
-        )
-        | (__Options["DualContentOperations"] extends DualContentLeftUnionOperation
-            ? PickSafe<DualContent["LeftContent"], __ValuesKeychain["LeftValueKeychain"]["Keys"]>
-            : never
-        )
-        | (__Options["DualContentOperations"] extends DualContentRightUnionOperation
-            ? PickSafe<DualContent["RightContent"], __ValuesKeychain["RightValueKeychain"]["Keys"]>
-            : never
-        )
+        Options["Recursive"] extends true
+        ? Intersect<
+            /** Replace `PropsMixture` by a more generic one and add config possibilities */
+            { [K in DualContentKeychain["MutualOptionalKeys"]]?: PropsMixture<PureDualContent<DualContent["LeftContent"][K], DualContent["RightContent"][K]>>; },
+            { [K in DualContentKeychain["MutualRequiredKeys"]]: PropsMixture<PureDualContent<DualContent["LeftContent"][K], DualContent["RightContent"][K]>>; }
+        >
+        : Intersect<
+            // Optional props
+            { [K in DualContentKeychain["MutualOptionalKeys"]]?: DualContent["LeftContent"][K] | DualContent["RightContent"][K]; },
+            // Required props
+            { [K in DualContentKeychain["MutualRequiredKeys"]]: DualContent["LeftContent"][K] | DualContent["RightContent"][K]; }
+        >
     );
 
-export interface ComparablePropsIntersectionOptions {
-    ContentTransformations: ContentTransformationOrArray;
-    MutualPropsUnionOptions: MutualPropsUnionOptions;
-}
-
-export interface PropsIntersectionOptions extends PickExcept<ComparablePropsIntersectionOptions, "MutualPropsUnionOptions"> {
-    MutualPropsUnionOptions: PickExcept<MutualPropsUnionOptions, "ContentTransformations">;
-}
-
-interface DefaultPropsIntersectionOptions extends ComparablePropsIntersectionOptions {
-    ContentTransformations: [ContentTransformations["ExtractObject"]];
-    MututalPropsOptions: DefaultMutualPropsUnionOptions;
-}
-
 /** Intersect only those types that are related to the same property key of object A and B. This function is only applicable on object types. */
-export type IntersectProps<
+export type PropsMixture<
     DualContent extends DefaultDualContent,
     Options extends DeepPartial<PropsIntersectionOptions> = DefaultPropsIntersectionOptions,
     _ = $,
-    __Options extends ComparablePropsIntersectionOptions = Spread<DefaultPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, ComparablePropsIntersectionOptions>,
+    __Options extends PropsIntersectionOptions = Spread<DefaultPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, PropsIntersectionOptions>,
     // Transformed by options
     __DualContent extends TransformedFlankValues<DualContent, __Options["ContentTransformations"], _> = TransformedFlankValues<DualContent, __Options["ContentTransformations"], _>,
     __ValuesKeychain extends FlankValuesKeychain<__DualContent> = FlankValuesKeychain<__DualContent>,
-    // __LeftMutualPick extends Pick<__DualContent["LeftContent"], __ValuesKeychain["MutualKeys"]> = Pick<__DualContent["LeftContent"], __ValuesKeychain["MutualKeys"]>,
-    // __RightMutualPick extends Pick<__DualContent["RightContent"], __ValuesKeychain["MutualKeys"]> = Pick<__DualContent["RightContent"], __ValuesKeychain["MutualKeys"]>
-    __LeftMutualPick = Pick<__DualContent["LeftContent"], __ValuesKeychain["MutualKeys"]>,
-    __RightMutualPick = Pick<__DualContent["RightContent"], __ValuesKeychain["MutualKeys"]>
+    __RemnantDualKeychain extends DualRemnantKeychain<__ValuesKeychain> =DualRemnantKeychain<__ValuesKeychain>,
+    __LeftMutualPick = PickSafe<__DualContent["LeftContent"], __ValuesKeychain["MutualKeys"]>,
+    __RightMutualPick = PickSafe<__DualContent["RightContent"], __ValuesKeychain["MutualKeys"]>
     > = (
-        TakeFirstIfMatchExtendsNotCase<
-            __ValuesKeychain["MutualKeys"],
-            If< // If both picked objects extends each other, then ...
-                And<Extends<__LeftMutualPick, __RightMutualPick>, Extends<__RightMutualPick, __LeftMutualPick>>,
-                If<
-                    /* Overall we want check if smaller fits into bigger */
-                    And<Extends<__LeftMutualPick, __DualContent["LeftContent"]>, Extends<__RightMutualPick, __DualContent["RightContent"]>>,
-                    __DualContent["LeftContent"] & __DualContent["RightContent"],
-                    If<
-                        Extends<__LeftMutualPick, __DualContent["LeftContent"]>,
-                        __DualContent["LeftContent"] & __RightMutualPick,
-                        If<
-                            Extends<__RightMutualPick, __DualContent["RightContent"]>,
-                            __LeftMutualPick & __DualContent["RightContent"],
-                            __LeftMutualPick & __RightMutualPick
+        Intersect<
+            Intersect<
+                (
+                    __Options["MixtureOperations"] & MixtureOperations["Intersect"] extends MixtureOperations["Intersect"]
+                    ? (
+                        __ValuesKeychain["MutualKeys"] extends never
+                        ? never
+                        : If< // If both picked objects extends each other, then ...
+                            And<Extends<__LeftMutualPick, __RightMutualPick>, Extends<__RightMutualPick, __LeftMutualPick>>,
+                            If<
+                                /* Overall we want check if smaller fits into bigger */
+                                And<Extends<__LeftMutualPick, __DualContent["LeftContent"]>, Extends<__RightMutualPick, __DualContent["RightContent"]>>,
+                                __DualContent["LeftContent"] & __DualContent["RightContent"],
+                                If<
+                                    Extends<__LeftMutualPick, __DualContent["LeftContent"]>,
+                                    __DualContent["LeftContent"] & __RightMutualPick,
+                                    If<
+                                        Extends<__RightMutualPick, __DualContent["RightContent"]>,
+                                        __LeftMutualPick & __DualContent["RightContent"],
+                                        __LeftMutualPick & __RightMutualPick
+                                    >
+                                >
+                            >,
+                            // never
+                            // .. \/\/ expand here
+                            IntersectMutualProps<__DualContent, __Options, __ValuesKeychain> // extend IntersectMutualProps for recursion
                         >
-                    >
-                >,
-                // never
-                // .. \/\/ expand here
-                UnionProps<__DualContent, __Options["MutualPropsUnionOptions"], $, __Options["MutualPropsUnionOptions"], __DualContent, __ValuesKeychain> // replace this by a type that expands recursively
-            >,
-            never
+                    )
+                    : never
+                ), (
+                    __Options["MixtureOperations"] & MixtureLeftUnionOperation extends MixtureLeftUnionOperation
+                    // ? PickSafe<__DualContent["LeftContent"], __RemnantDualKeychain["LeftRemnant"]["Keys"]>
+                    ? PickSafe<__DualContent["LeftContent"], __RemnantDualKeychain["LeftRemnant"]["Keys"]>
+                    : never
+                )
+            >, (
+                __Options["MixtureOperations"] & MixtureRightUnionOperation extends MixtureRightUnionOperation
+                ? PickSafe<__DualContent["RightContent"], __RemnantDualKeychain["RightRemnant"]["Keys"]>
+                : never
+            )
         >
     );
 
 export interface ComparablePrimitivesAndPropsIntersectionOptions {
     PrimitiveIntersectionOptions: PrimitivesIntersectionOptions;
-    PropsIntersectionOptions: ComparablePropsIntersectionOptions;
+    // PropsIntersectionOptions: ComparablePropsIntersectionOptions;
+    PropsIntersectionOptions: PropsIntersectionOptions;
 }
 
 export interface PrimitivesAndPropsIntersectionOptions extends PickExcept<ComparablePrimitivesAndPropsIntersectionOptions, "PropsIntersectionOptions"> {
@@ -887,26 +896,13 @@ export interface DefaultPrimitivesAndPropsIntersectionOptions extends Comparable
     PropsIntersectionOptions: DefaultPropsIntersectionOptions;
 }
 
-// export type PreferPrimitivesOverEmptyProps<Primitives, Props> = (
-//     // If<
-//     //     // And<Not<Extends<Primitives, never>>, And<Extends<Props, {}>, Extends<{}, Props>>>,
-//     //     And<Extends<Props, {}>, Extends<{}, Props>>,
-//     //     // Choose primitives if props are equals {}..
-//     //     Primitives,
-//     // ..otherwise union them
-//     Props | Primitives
-//     // >
-// );
-
 export type IntersectPrimitivesAndProps<
     DualContent extends DefaultDualContent,
     Options extends DeepPartial<PrimitivesAndPropsIntersectionOptions> = DefaultPrimitivesAndPropsIntersectionOptions,
     __Options extends ComparablePrimitivesAndPropsIntersectionOptions = Spread<DefaultPrimitivesAndPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, ComparablePrimitivesAndPropsIntersectionOptions>,
     > = (
-        // PreferPrimitivesOverEmptyProps<
         IntersectPrimitives<DualContent, __Options["PrimitiveIntersectionOptions"], __Options["PrimitiveIntersectionOptions"]>
-        | IntersectProps<DualContent, __Options["PropsIntersectionOptions"], $, __Options["PropsIntersectionOptions"]>
-        // >
+        | PropsMixture<DualContent, __Options["PropsIntersectionOptions"], $, __Options["PropsIntersectionOptions"]>
     );
 
 // declare const tttt: test3456;
@@ -914,12 +910,14 @@ export type IntersectPrimitivesAndProps<
 
 // type testtt_0 = PureDualContent<{ a: { a2: { a3: "a3" } }, b: "b" } | number, { a: { a2: { a3: "a3_1" } }, b: "b2" } | number | { d: "d" }>;
 // type testtt_0 = PureDualContent<{ a: { a2: { a3: "a3" } }, b: "b", e: "e" } | number, { a: { a2: { a3: "a3_1" } }, b: "b2", d: "d" } | number>;
-type testtt_0 = PureDualContent<{ a: { a: "" } }, { a: { a: "", b: "" } }>;
+type testtt_0 = PureDualContent<{ a: { a: "" }, b: "bb", c: "c" }, { a: { a: "", b: "" }, e: "e" }>; // TODO: intersect a: { a: ... } and a: { a: ... }
+// type testtt_0_0_1 = PureDualContent<{ a: { a: "" } }, { a: { a: "", b: "" } }>;
 type testtt_0_1 = TransformedFlankValues<testtt_0, ["ExcludeObject"]>;
 type testtt23 = IntersectPrimitives<testtt_0_1>;
 type testtt_0_2 = TransformedFlankValues<testtt_0, ["ExtractObject"]>;
-declare const testtt24: IntersectProps<testtt_0>;
-
+declare const testtt24: PropsMixture<testtt_0, { Recursive: true }>;
+testtt24.a.
+// type testtt24_0 = typeof testtt24._._2.LeftRemnant.Keys;
 
 export interface ArrayIntersectionOptions {
     ContentTransformations: ContentTransformationOrArray;
@@ -1128,7 +1126,7 @@ type test2 = typeof ctest;
 
 type test3 = AnyKeys<ITest> & AnyKeys<test_2>;
 
-type gh = IntersectProps<PureDualContent<{ a: "a" }, { a: "b" }>>;
+type gh = PropsMixture<PureDualContent<{ a: "a" }, { a: "b" }>>;
 
 // type gh = IntersectArrays<string[], string[], DefaultExpandMode>;
 // type gj = string extends never ? true : false;
