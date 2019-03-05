@@ -507,7 +507,7 @@ declare const test3456: Spread<DefaultPrimitivesAndPropsIntersectionOptions, {
     PrimitiveIntersectionOptions?: {
         ValueOptions: undefined,
     },
-}, { OverwriteMode: "extend", MutualKeySignature: "left" }, SuperPrimitivesAndPropsIntersectionOptions>; // { OverwriteMode: "extend", MutualKeySignature: "left" }
+}, { OverwriteMode: "extend", MutualKeySignature: "left" }, ComparablePrimitivesAndPropsIntersectionOptions>; // { OverwriteMode: "extend", MutualKeySignature: "left" }
 // test3456.PrimitiveIntersectionOptions.
 
 type test924_0 = PureDualContent<{ a?: "a", b: { a: "a2" }, d?: "d", e?: { a: "a3", h: { a: "" }, haha?: "lol" } }, { a: undefined, b?: boolean, c?: undefined, e: { a: { a: "a4", b: "b3" }, h: { b: "" }, haha: "lol" } }>;
@@ -713,15 +713,6 @@ export type TakeFirstIfMatchExtendsNotCase<Match, First, Second, NotCase = never
 //     __ReducedState
 // >;
 
-// type CompactProps<
-//     A,
-//     B,
-//     __AKeys extends AnyKeys<A> = AnyKeys<A>,
-//     __BKeys extends AnyKeys<B> = AnyKeys<B>,
-//     __MutualKeys extends IntersectPrimitiveTypes<__AKeys, __BKeys> = IntersectPrimitiveTypes<__AKeys, __BKeys>,
-//     __MutualKeys2 extends (__MutualKeys extends __AKeys & __BKeys ? __MutualKeys : never) = (__MutualKeys extends __AKeys & __BKeys ? __MutualKeys : never),
-//     > = { [K in __MutualKeys2]: A[K] | B[K]; };
-
 export interface PrimitivesIntersectionOptions {
     ContentTransformations: ContentTransformationOrArray;
 }
@@ -793,16 +784,16 @@ export type UnionMutualProps<
         >
     );
 
-export interface SuperPropsIntersectionOptions {
+export interface ComparablePropsIntersectionOptions {
     ContentTransformations: ContentTransformationOrArray;
     MutualPropsUnionOptions: MutualPropsUnionOptions;
 }
 
-export interface UserPropsIntersectionOptions extends PickExcept<SuperPropsIntersectionOptions, "MutualPropsUnionOptions"> {
-    MutualPropsUnionOptions: Pick<MutualPropsUnionOptions, "Recursive">;
+export interface PropsIntersectionOptions extends PickExcept<ComparablePropsIntersectionOptions, "MutualPropsUnionOptions"> {
+    MutualPropsUnionOptions: PickExcept<MutualPropsUnionOptions, "ContentTransformations">;
 }
 
-interface DefaultPropsIntersectionOptions extends SuperPropsIntersectionOptions {
+interface DefaultPropsIntersectionOptions extends ComparablePropsIntersectionOptions {
     ContentTransformations: [ContentTransformations["ExtractObject"]];
     MututalPropsOptions: DefaultMutualPropsUnionOptions;
 }
@@ -810,9 +801,9 @@ interface DefaultPropsIntersectionOptions extends SuperPropsIntersectionOptions 
 /** Intersect only those types that are related to the same property key of object A and B. This function is only applicable on object types. */
 export type IntersectProps<
     DualContent extends DefaultDualContent,
-    Options extends DeepPartial<UserPropsIntersectionOptions> = DefaultPropsIntersectionOptions,
+    Options extends DeepPartial<PropsIntersectionOptions> = DefaultPropsIntersectionOptions,
     _ = $,
-    __Options extends SuperPropsIntersectionOptions = Spread<DefaultPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, SuperPropsIntersectionOptions>,
+    __Options extends ComparablePropsIntersectionOptions = Spread<DefaultPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, ComparablePropsIntersectionOptions>,
     // Transformed by options
     __DualContent extends TransformedFlankValues<DualContent, __Options["ContentTransformations"], _> = TransformedFlankValues<DualContent, __Options["ContentTransformations"], _>,
     __ValuesKeychain extends FlankValuesKeychain<__DualContent> = FlankValuesKeychain<__DualContent>,
@@ -845,17 +836,17 @@ export type IntersectProps<
         >
     );
 
-export interface SuperPrimitivesAndPropsIntersectionOptions {
+export interface ComparablePrimitivesAndPropsIntersectionOptions {
     PrimitiveIntersectionOptions: PrimitivesIntersectionOptions;
-    PropsIntersectionOptions: SuperPropsIntersectionOptions;
+    PropsIntersectionOptions: ComparablePropsIntersectionOptions;
 }
 
-export interface UserPrimitivesAndPropsIntersectionOptions extends PickExcept<SuperPrimitivesAndPropsIntersectionOptions, "PropsIntersectionOptions"> {
+export interface PrimitivesAndPropsIntersectionOptions extends PickExcept<ComparablePrimitivesAndPropsIntersectionOptions, "PropsIntersectionOptions"> {
     PrimitiveIntersectionOptions: PrimitivesIntersectionOptions;
-    PropsIntersectionOptions: UserPropsIntersectionOptions;
+    PropsIntersectionOptions: PropsIntersectionOptions;
 }
 
-export interface DefaultPrimitivesAndPropsIntersectionOptions extends SuperPrimitivesAndPropsIntersectionOptions {
+export interface DefaultPrimitivesAndPropsIntersectionOptions extends ComparablePrimitivesAndPropsIntersectionOptions {
     PrimitiveIntersectionOptions: DefaultPrimitivesIntersectionOptions;
     PropsIntersectionOptions: DefaultPropsIntersectionOptions;
 }
@@ -873,8 +864,8 @@ export interface DefaultPrimitivesAndPropsIntersectionOptions extends SuperPrimi
 
 export type IntersectPrimitivesAndProps<
     DualContent extends DefaultDualContent,
-    Options extends DeepPartial<UserPrimitivesAndPropsIntersectionOptions> = DefaultPrimitivesAndPropsIntersectionOptions,
-    __Options extends SuperPrimitivesAndPropsIntersectionOptions = Spread<DefaultPrimitivesAndPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, SuperPrimitivesAndPropsIntersectionOptions>,
+    Options extends DeepPartial<PrimitivesAndPropsIntersectionOptions> = DefaultPrimitivesAndPropsIntersectionOptions,
+    __Options extends ComparablePrimitivesAndPropsIntersectionOptions = Spread<DefaultPrimitivesAndPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, ComparablePrimitivesAndPropsIntersectionOptions>,
     > = (
         // PreferPrimitivesOverEmptyProps<
         IntersectPrimitives<DualContent, __Options["PrimitiveIntersectionOptions"], __Options["PrimitiveIntersectionOptions"]>
@@ -904,8 +895,8 @@ export interface DefaultArrayIntersectionOptions extends ArrayIntersectionOption
 
 export type IntersectArray<
     DualContent extends DefaultDualContent,
-    Options extends DeepPartial<UserPrimitivesAndPropsIntersectionOptions> = DefaultPrimitivesAndPropsIntersectionOptions,
-    __Options extends SuperPrimitivesAndPropsIntersectionOptions = Spread<DefaultPrimitivesAndPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, SuperPrimitivesAndPropsIntersectionOptions>,
+    Options extends DeepPartial<PrimitivesAndPropsIntersectionOptions> = DefaultPrimitivesAndPropsIntersectionOptions,
+    __Options extends ComparablePrimitivesAndPropsIntersectionOptions = Spread<DefaultPrimitivesAndPropsIntersectionOptions, Options, { OverwriteMode: "extend", MutualKeySignature: "left" }, ComparablePrimitivesAndPropsIntersectionOptions>,
     > = (
         DualContent["LeftContent"] extends Array<infer LeftArrayTypes>
         ? DualContent["RightContent"] extends Array<infer RightArrayTypes>
@@ -914,9 +905,9 @@ export type IntersectArray<
         : never
     );
 
-// type test56_0 = Exclude {} | (number | string | { a: "a2" })[]
-type test56 = PureDualContent<string | (string | { a: "a" })[], {} | (number | string | { a: "a2" })[]>;
-declare const test56: IntersectArray<test56>;
+// // type test56_0 = Exclude {} | (number | string | { a: "a2" })[]
+// type test56 = PureDualContent<string | (string | { a: "a" })[], {} | (number | string | { a: "a2" })[]>;
+// declare const test56: IntersectArray<test56>;
 
 
 
