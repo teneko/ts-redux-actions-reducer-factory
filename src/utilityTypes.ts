@@ -61,55 +61,7 @@ export type NotTypeKeys<T, NotType = never> = Pick<T, { [K in keyof T]: T[K] ext
 
 export type IsNotNever<T> = [T] extends [never] ? false : true;
 
-type DeepNotNotType<
-    T extends { [key: string]: any },
-    NotType,
-    __NotNeverKeys extends NotTypeKeys<T, NotType> = NotTypeKeys<T, NotType>
-    > = { [P in keyof __NotNeverKeys]: DeepNotNotType<__NotNeverKeys[P], NotType> };
-
-// type NonNever<T extends {}> = Pick<T, { [K in keyof T]: T[K] extends never ? never : K }[keyof T]>;
-// type GetDefined<TypesMap extends { [key: string]: any }> = keyof NonNever<{ [T in keyof TypesMap]: TypesMap[T] extends undefined ? never : TypesMap[T] }>;
-
-type test123 = undefined extends never ? true : false;
-
-
-
-type test649 = DeepNotNotType<{ a: never; b: "b", c: { a: never } }, never>;
-declare const ctest649: test
-
-// type Take<N extends number, T extends any[], R extends any[]=[]> = {
-//     0: Reverse<R>,
-//     1: Take<N, Tail<T>, Cons<Head<T>, R>>
-//   }[T extends [] ? 0 : R["length"] extends N ? 0 : 1];
-
-//   export type Group<N extends number, T extends any[], R1 extends any[]=[], R2 extends any[]=[]> = {
-//     0: Reverse<R2>,
-//     1: Group<N, T, [], Cons<Reverse<R1>, R2>>,
-//     2: Group<N, Tail<T>, Cons<Head<T>, R1>, R2>
-//   }[T extends [] ? R1 extends [] ? 0 : 1 : (R1["length"] extends N ? 1 : 2)];
-
-//   export type Drop<N extends number, T extends any[], R extends any[]=[]> = {
-//     0: T,
-//     1: Drop<N, Tail<T>, Cons<Head<T>, R>>
-//   }[T extends [] ? 0 : R["length"] extends N ? 0 : 1];
-
-// export type InferableHeadRest<
-// A extends any[],
-// >
-
-// export type DropHead<Tuple extends any> = ((..._: Tuple) => never) extends (_: infer _, ..._1: infer Rest) => never ? Rest : [];
-
 export type DropHead<Tuple extends any[]> = ((..._: Tuple) => never) extends (_: infer _, ..._1: infer Rest) => never ? Rest : [];
-
-// export type DropHead<Tuple> = (
-//     Tuple extends any[]
-//     ? (((..._: Tuple) => never) extends (_: infer _, ..._1: infer Rest) => never
-//         ? Rest
-//         : [])
-//     : []
-// );
-
-// type test5678 = DropHead<[number]>;
 
 export type DefaultValueContent = {};
 
@@ -123,108 +75,12 @@ export interface ContentMutations {
 export type ContentMutationKeys = keyof ContentMutations;
 export type ContentMutationArray = ContentMutationKeys[];
 
-export type DefaultContentMutation = []; // & [...ValueOptionArray]; // TODO: remove [] and investigate _ in Value<...>
+export type DefaultContentMutation = [];
 // The empty array don't lead to circular dependency error.
 export type ContentMutationOrArray = ContentMutationKeys | ContentMutationArray;
-// export type ValueOptionOrArray = ValueOptionArray | [];
-// export type ValueOptionAsArray<T extends ValueOptionOrArray> = T extends any[] ? T : [T];
 export type ContentMutationAsArray<Options extends ContentMutationOrArray> = Options extends ContentMutationKeys[] ? Options : [Options];
 
-// export type ValueOptionAsArray<Options> = Options extends any[] ? Options : [Options];
-
-
-
-// type InferDiscard<V> = V extends { _: infer T } ? T : V;
-// type Flat<T> = InferDiscard<T extends (infer P)[] ? { _: Flat<P> } : T>;
-// type Flatted = Flat<["a", ["b", ["c", ["d"]]]]>;
-// // Results in "a" | "b" | "c" | "d"
-
-// type t45678 = [[], "tzr"] extends [string, any[]] ? true : false;
-
-// type t566845 = Exclude<[[], "tzr"], ["tzr"]>;
-
-
-// type Flat_1<T> = InferredDiscard<T extends Array<infer P> ? { _: Flat<P> } : T>;
-// type Flatted_1 = Flat2<["a", ["b", ["c", ["d"]]]]>;
-// // Results in "a" | "b" | "c" | "d"
-
-// type Flat2<
-// Content extends {}
-// > = {
-//     empty: Content;
-//     nonEmpty: Flat2<Content>
-// }[(Content extends [] ? "empty" : "nonEmpty") : never];
-
-// interface Flat2Dummy<T, _> {
-//     Flatted: Flat2<T>;
-// }
-
-// type Flatted2 = Flat2<["a", ["b", ["c", ["d"]]]], [], $>;
-
 export type $ = {};
-
-// type test355 = null extends $ ? true : false;
-
-// type test255_0 = Void
-
-// export type ValueContent<
-//     Content extends DefaultValueContent,
-//     Options extends ValueOptionOrArray,
-//     // // // // /**
-//     // // // //  * Only, and just only for having a constraint
-//     // // // //  * that does not extend or expect anything.
-//     // // // //  * With this trick, We can have default
-//     // // // //  * constraints in derived tyes, that would
-//     // // // //  * otherwise cause a circular dependency
-//     // // // //  * error.
-//     // // // //  */
-//     Recursive,
-//     __O extends ValueOptionAsArray<Options> = ValueOptionAsArray<Options>,
-//     __C = __O extends [] ? Content : (
-//         __O[0] extends ValueOptions["ExtractObject"]
-//         ? ExtractObject<Content>
-//         : __O[0] extends ValueOptions["ExcludeArray"]
-//         ? ExcludeArray<Content>
-//         : __O[0] extends ValueOptions["ExcludeObject"]
-//         ? ExcludeObject<Content>
-//         : "Content tranformation not implemented"
-//     ),
-//     > = {
-//         "empty": Content;
-//         "nonEmpty": ValueContent<__C, DropHead<__O>, Recursive>;
-//     }[Recursive extends $ ? (Options extends [] ? "empty" : "nonEmpty") : "empty"];
-
-// export type ValueContent<
-//     Content extends DefaultValueContent,
-//     Transformations extends ContentMutationOrArray,
-//     /**
-//      * Only, and just only for having a constraint
-//      * that does not extend or expect anything.
-//      * With this trick, We can have default
-//      * constraints in derived tyes, that would
-//      * otherwise cause a circular dependency
-//      * error.
-//      */
-//     Recursive,
-//     __TransformationArray extends ContentMutationAsArray<Transformations> = ContentMutationAsArray<Transformations>
-//     > = {
-//         "empty": Content;
-//         "nonEmpty": ValueContent<
-//             __TransformationArray extends ContentMutationArray ? (
-//                 __TransformationArray extends []
-//                 ? Content
-//                 : __TransformationArray[0] extends ContentMutations["ExtractObject"]
-//                 ? ExtractObject<Content>
-//                 : __TransformationArray[0] extends ContentMutations["ExcludeArray"]
-//                 ? ExcludeArray<Content>
-//                 : __TransformationArray[0] extends ContentMutations["ExcludeObject"]
-//                 ? ExcludeObject<Content>
-//                 : "Tranformation not implemented")
-//             : Content,
-//             DropHead<__TransformationArray>,
-//             Recursive
-//         >;
-//     }[Recursive extends $ ? (Transformations extends [] ? "empty" : "nonEmpty") : "empty"];
 
 export type ValueContent<
     Content,
@@ -252,55 +108,6 @@ export type ValueContent<
             CanMutate
         >;
     }[CanMutate extends $ ? (Mutations extends [] ? "empty" : "nonEmpty") : "empty"];
-
-// type test834 = ValueContent<"string", ValueOptions["ExtractObject"], $>;
-
-// export type ValueOptionAsArray2<Options extends ValueOptionOrArray> = Options extends Array<keyof ValueOptions> ? Options : [Options];
-
-// export type ValueContent2<
-//     Content extends DefaultValueContent,
-//     Options extends ValueOptionOrArray,
-//     __O extends ValueOptionAsArray2<Options> = ValueOptionAsArray2<Options>,
-//     // __C = __O extends [] ? Content : (
-//     //     __O[0] extends ValueOptions["ExtractObject"]
-//     //     ? ExtractObject<Content>
-//     //     : __O[0] extends ValueOptions["ExcludeArray"]
-//     //     ? ExcludeArray<Content>
-//     //     : __O[0] extends ValueOptions["ExcludeObject"]
-//     //     ? ExcludeObject<Content>
-//     //     : Content
-//     // ),
-//     > = {
-//         "empty": Content;
-//         "nonEmpty": ValueContent2<Content, DropHead<__O>>;
-//     }[(Options extends [] ? "empty" : "nonEmpty")];
-
-// type test834 = ValueContent2<"string", ValueOptions["ExtractObject"]>;
-
-// export type ValueOptionAsArray2<Options extends ValueOptionOrArray> = Options extends Array<keyof ValueOptions> ? Options : [Options];
-
-// export type ValueContent2<
-//     Content extends DefaultValueContent,
-//     __O extends ValueOptionAsArray2<any> = ValueOptionAsArray2<any>,
-//     > = {
-//         "empty": Content;
-//         "nonEmpty": ValueContent2<Content, DropHead<__O>>;
-//     }[(__O extends [] ? "empty" : "nonEmpty")];
-
-// type test834 = ValueContent2<"string", ValueOptions["ExtractObject"]>;
-
-// export type ValueOptionAsArray2<Options extends any[] | ""> = Options extends Array<keyof []> ? Options : [Options];
-// // export type DropHead2<Tuple extends any[]> = ((..._: Tuple) => never) extends (_: infer _, ..._1: infer Rest) => never ? Rest : [];
-// export type DropHead2<Tuple extends any[]> = ((..._: Tuple) => never) extends (_: infer _, ..._1: infer Rest) => never ? Rest : [];
-
-// export type Flat3<
-//     Content
-//     > = {
-//         "empty": never;
-//         "nonEmpty": ((args: (Content extends Array<infer P> ? P : never)) => never) extends (..._: infer U) => any ? Flat3<U> : never;
-//     }[(Content extends never ? "empty" : "nonEmpty")];
-
-// type test834 = Flat3<["a", ["b"]]>
 
 export type Value<
     Content,
@@ -343,8 +150,6 @@ export interface ImpureFlankContent<
 declare const test363: ImpureDualContent<"", { a: "b" }, ["ExtractObject"]>;
 type tes23t = typeof test363.RightContent;
 
-// type test363 = [void] extends [unknown] ? true : false;
-
 /**
  * Get the optional keys from an object.
  * credits: https://stackoverflow.com/a/49683575
@@ -375,12 +180,6 @@ export interface DefaultSpreadOptions<LeftContent> extends SpreadOptions<LeftCon
     Recursive: false;
     MutualKeySignature: undefined;
 }
-
-// const test45 = {} as SpreadOptions;
-// type test45 = typeof test45["Recursive"];
-// type test46 = Partial<{}>["a"];
-
-// type test34 = unknown extends any ? true: false;
 
 type IfOptionalExcludeUndefined<IsOptional extends boolean, T> = IsOptional extends true ? Exclude<T, undefined> : T;
 
@@ -587,92 +386,6 @@ type test924_1 = FlankValuesKeychain<test924_0>["RequiredKeys"];
 // declare const ctest924: test924;
 // ctest924.e.h.
 
-// export interface ZOptions {
-//     ValueOptions: ContentMutationOrArray;
-// }
-
-// interface DefaultZOptions extends ZOptions {
-//     ValueOptions: [ContentMutations["ExcludeObject"]];
-// }
-
-// export type Z<
-//     Options extends Partial<ZOptions> = DefaultZOptions,
-//     > = Spread<FlankValuesFromContent<DefaultZOptions, Options>, { OverwriteMode: "extend", MutualKeySignature: "left" }>; // { OverwriteMode: "extend", MutualKeySignature: "left" }
-
-// type Z5 = Z<{  }>;
-// declare const cZ5: Z5;
-// type tt = typeof cZ5.ValueOptions;
-
-// type test5467 = [number?];
-
-// type t455 = [ValueOptions["ExcludeObject"]] extends any[] ? true : false;
-
-// type test256 = IntersectPrimitives<FlankValuesFromContent<string | number | { } | any[], number, "ExcludeArray">>;
-
-
-// /** Intersect only those types that are related to the same property key of object A and B. This function is only applicable on object types. */
-// export type IntersectProps<
-//     A,
-//     B,
-//     __A extends ExtractObject<A> = ExtractObject<A>,
-//     __B extends ExtractObject<B> = ExtractObject<B>,
-//     __AKeys extends AnyKeys<__A> = AnyKeys<__A>,
-//     __BKeys extends AnyKeys<__B> = AnyKeys<__B>,
-//     __MutualKeys extends __AKeys & __BKeys = __AKeys & __BKeys,
-//     // For type compatibility
-//     __MutualKeys2 extends (__MutualKeys extends __AKeys & __BKeys ? __MutualKeys : never) = (__MutualKeys extends __AKeys & __BKeys ? __MutualKeys : never),
-//     __APicked extends Pick<__A, __MutualKeys2> = Pick<__A, __MutualKeys2>,
-//     __BPicked extends Pick<__B, __MutualKeys2> = Pick<__B, __MutualKeys2>
-//     > = (
-//         TakeFirstIfMatchExtendsNotCase<
-//             __MutualKeys,
-//             If< // If both picked objects extends each other, then ...
-//                 And<Extends<__APicked, __BPicked>, Extends<__BPicked, __APicked>>,
-//                 If<
-//                     And<Extends<__APicked, __A>, Extends<__BPicked, __B>>,
-//                     __A & __B,
-//                     If<
-//                         Extends<__APicked, __A>,
-//                         __A & __BPicked,
-//                         If<
-//                             Extends<__BPicked, __B>,
-//                             __APicked & __B,
-//                             __APicked & __BPicked
-//                         >
-//                     >
-//                 >,
-//                 // never // expand here
-//                 { [K in __MutualKeys2]: __A[K] | __B[K]; } // replace this by a type that expands recursively
-//             >,
-//             {}
-//         >
-//     );
-
-
-// export type UnionProps<>
-
-// interface ValueKeychain<
-//     V extends DefaultValue,
-//     __OK extends OptionalKeys<V["Content"]> = OptionalKeys<V["Content"]>,
-//     __RK extends Exclude<keyof V["Content"], __OK> = Exclude<keyof V["Content"], __OK>
-//     > {
-//     OptionalKeys: __OK;
-//     RequiredKeys: __RK;
-//     Keys: keyof V["Content"];
-// }
-
-// type t1 = Value<{ a: "a" }, ["ExcludeArray"]>;
-// type t2 = ValueKeychain<t1>;
-// type t3 = t2["RequiredKeys"];
-// type t4 = Value<t1["Content"], ["ExcludeObject"]>
-// type t10 = LeftRight<t1, t4>;
-// type t20 = LeftRightKeychain<t10>["Keys"];
-// type t25 = DefaultValueOption;
-// type t30 = LeftRight<Value<t10["LeftContent"], t25>, Value<t10["RightContent"], t25>>;
-// type t35 = t30["LeftContent"];
-// type t40 = LeftRightKeychain<t30>;
-// type t45 = t40["RequiredKeys"];
-// type t50 = keyof t35;
 
 export interface ContentKeychain<
     Content,
@@ -728,15 +441,6 @@ export interface DualRemnantKeychain<
 type test637 = FlankValuesKeychain<PureDualContent<{ b: "a" }, { b: "b", c: "c" }>>;
 declare const test638: SingleRemnantKeychain<test637, test637["RightValueKeychain"]>;
 type test638_1 = typeof test638.Keys;
-
-
-
-
-
-
-
-
-
 
 
 export type ActionTypeOrActionCreator<Payload> = ActionFunctions<Payload> | string;
@@ -1040,20 +744,22 @@ type test47 = [{}] extends [unknown] ? true : false;
 
 type test589467840 = MixtureKinds["LeftUnion"] extends FlankOrLeftUnionMixtureKind ? true : false;
 
-export interface ArrayIntersectionOptions {
+export interface ArrayMixtureOptions {
     ContentMutations: ContentMutationOrArray;
+    MixtureKind: MixtureKindKeys;
     PrimPropsMixtureOptions: PrimPropsMixtureOptions;
 }
 
-export interface DefaultArrayIntersectionOptions extends ArrayIntersectionOptions {
+export interface DefaultArrayMixtureOptions extends ArrayMixtureOptions {
     ContentMutations: "ExtractArray";
+    MixtureKind: "Intersection" | "FlankUnion";
     PrimPropsMixtureOptions: DefaultPrimPropsMixtureOptions;
 }
 
 export type ArrayMixture<
     DualContent extends DefaultDualContent,
-    Options extends DeepPartial<ArrayIntersectionOptions> = DefaultArrayIntersectionOptions,
-    __Options extends ArrayIntersectionOptions = DualContentSpread<DefaultArrayIntersectionOptions, Options, { OverwriteMode: "Extend", MutualKeySignature: "Left", ComparableContent: ArrayIntersectionOptions }>,
+    Options extends DeepPartial<ArrayMixtureOptions> = DefaultArrayMixtureOptions,
+    __Options extends ArrayMixtureOptions = DualContentSpread<DefaultArrayMixtureOptions, Options, { OverwriteMode: "Extend", MutualKeySignature: "Left", ComparableContent: ArrayMixtureOptions }>,
     __DualContent extends ImpureFlankContent<DualContent, __Options["ContentMutations"]> = ImpureFlankContent<DualContent, __Options["ContentMutations"]>
     > = (
         __DualContent["LeftContent"] extends Array<infer LeftTypes>
@@ -1072,6 +778,10 @@ declare const test59_1: ArrayMixture<test59>;
 
 // type test60 = PureDualContent<{ a: "a" }, { a: "a2" }>;
 // declare const test60_1: PropsMixture<test60, { MixtureKind: "Intersection" }>;
+
+// export interface ArrPrimPropsMixtureOptions {
+
+// }
 
 export type ArrPrimPropsMixture<
     // to be continued ...
