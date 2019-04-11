@@ -746,13 +746,13 @@ type test589467840 = MixtureKinds["LeftUnion"] extends FlankOrLeftUnionMixtureKi
 
 export interface ArrayMixtureOptions {
     ContentMutations: ContentMutationOrArray;
-    MixtureKind: MixtureKindKeys;
+    // MixtureKind: MixtureKindKeys;
     PrimPropsMixtureOptions: PrimPropsMixtureOptions;
 }
 
 export interface DefaultArrayMixtureOptions extends ArrayMixtureOptions {
     ContentMutations: "ExtractArray";
-    MixtureKind: "Intersection" | "FlankUnion";
+    // MixtureKind: "Intersection" | "FlankUnion";
     PrimPropsMixtureOptions: DefaultPrimPropsMixtureOptions;
 }
 
