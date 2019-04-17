@@ -1,6 +1,8 @@
 import { AnyKeys, ExcludeArray, ExcludeObject, Extends, ExtractArray, ExtractObject } from "@teronis/ts-definitions";
 import { ActionFunctions } from "redux-actions";
 import { And, If, Not, Or } from "typescript-logic";
+import { Drop } from "typescript-tuple";
+import { Tail } from "typescript-tuple/lib/utils";
 // tslint:disable: interface-name
 
 /** credits: https://stackoverflow.com/a/49936686/11044059 */
@@ -25,8 +27,9 @@ export type DeepRequired<T> = {
 };
 
 type Intersect<A, B> = (
+    // When A extends never ..
     [A] extends [never]
-    // Take B, whatever it is
+    // .. take B, whatever it is
     ? B
     // A NOT never
     : ([B] extends [never]
@@ -108,6 +111,24 @@ export type ValueContent<
             CanMutate
         >;
     }[CanMutate extends $ ? (Mutations extends [] ? "empty" : "nonEmpty") : "empty"];
+
+// export type ValueContent2<
+//     Content,
+//     Mutations extends ContentMutationOrArray,
+//     // /** If false `Transformations` won't applied on `Content`. */
+//     // CanMutate,
+//     __TransformationArray extends ContentMutationAsArray<Mutations> = ContentMutationAsArray<Mutations>
+//     > = {
+//         "empty": Content;
+//         "ExtractObject": ValueContent2<ExtractObject<Content>, Tail<__TransformationArray>>;
+//         "NotImplemented": "Tranformation not implemented";
+//     }[(
+//         __TransformationArray extends []
+//         ? "empty"
+//         : __TransformationArray[0] extends ContentMutations["ExtractObject"]
+//         ? "ExtractObject"
+//         : "NotImplemented"
+//     )];
 
 export type Value<
     Content,
@@ -496,26 +517,35 @@ interface DefaultPrimitivesMixtureOptions extends PrimitivesMixtureOptions {
 
 // type test347 = {}
 
+type test374<
+    CanMutate,
+    __DualContent extends ImpureFlankContent<PureDualContent<{}, {}>, [], CanMutate> = ImpureFlankContent<PureDualContent<{}, {}>, [], CanMutate>,
+    > = boolean;
+
+// type test374<
+//     __DualContent extends ImpureFlankContent<PureDualContent<{}, {}>, []> = ImpureFlankContent<PureDualContent<{}, {}>, []>,
+//     > = boolean;
+
 /** A Primitives-Mixture. */
-export type PrimitivesMixture<
-    DualContent extends DefaultDualContent,
-    Options extends DeepPartial<PrimitivesMixtureOptions> = DefaultPrimitivesMixtureOptions,
-    __Options extends PrimitivesMixtureOptions = DualContentSpread<DefaultPrimitivesMixtureOptions, Options, { OverwriteMode: "Extend", MutualKeySignature: "Left", ComparableContent: PrimitivesMixtureOptions }>,
-    __DualContent extends ImpureFlankContent<DualContent, __Options["ContentMutations"]> = ImpureFlankContent<DualContent, __Options["ContentMutations"]>,
-    __Intersection = Intersect<__DualContent["LeftContent"], __DualContent["RightContent"]>
-    > = (
-        ExtractOrUnknown<__Options["MixtureKind"], MixtureKinds["Intersection"]> extends MixtureKinds["Intersection"]
-        ? __Intersection
-        : never
-    ) | (
-        ExtractOrUnknown<__Options["MixtureKind"], FlankOrLeftUnionMixtureKind> extends FlankOrLeftUnionMixtureKind
-        ? Exclude<__DualContent["LeftContent"], __Intersection>
-        : never
-    ) | (
-        ExtractOrUnknown<__Options["MixtureKind"], FlankOrRightUnionMixtureKind> extends FlankOrRightUnionMixtureKind
-        ? Exclude<__DualContent["RightContent"], __Intersection>
-        : never
-    );
+// export type PrimitivesMixture<
+//     DualContent extends DefaultDualContent,
+//     Options extends DeepPartial<PrimitivesMixtureOptions> = DefaultPrimitivesMixtureOptions,
+//     __Options extends PrimitivesMixtureOptions = DualContentSpread<DefaultPrimitivesMixtureOptions, Options, { OverwriteMode: "Extend", MutualKeySignature: "Left", ComparableContent: PrimitivesMixtureOptions }>,
+//     __DualContent extends ImpureFlankContent<DualContent, __Options["ContentMutations"]> = ImpureFlankContent<DualContent, __Options["ContentMutations"]>,
+//     __Intersection = Intersect<__DualContent["LeftContent"], __DualContent["RightContent"]>
+//     > = (
+//         ExtractOrUnknown<__Options["MixtureKind"], MixtureKinds["Intersection"]> extends MixtureKinds["Intersection"]
+//         ? __Intersection
+//         : never
+//     ) | (
+//         ExtractOrUnknown<__Options["MixtureKind"], FlankOrLeftUnionMixtureKind> extends FlankOrLeftUnionMixtureKind
+//         ? Exclude<__DualContent["LeftContent"], __Intersection>
+//         : never
+//     ) | (
+//         ExtractOrUnknown<__Options["MixtureKind"], FlankOrRightUnionMixtureKind> extends FlankOrRightUnionMixtureKind
+//         ? Exclude<__DualContent["RightContent"], __Intersection>
+//         : never
+//     );
 
 type test58 = PureDualContent<string | (string | { a: "a" })[] | undefined, {} | number | (number | string | { a: "a2" })[]>;
 // declare const test56: PrimitivesMixture<test58, { MixtureKind: MixtureKindKeys }>;
@@ -564,126 +594,126 @@ interface DefaultPropsMixtureOptions extends PropsMixtureOptions {
 }
 
 /** A subtype of `MutualPropsMixture`. Not intended to be called directly. */
-type RecursiveMutualPropsMixture<
-    DualContent extends DefaultDualContent,
-    Options extends PropsMixtureOptions,
-    DualContentKeychain extends FlankValuesKeychain<DualContent> = FlankValuesKeychain<DualContent>,
-    __RecursiveOptions extends PropsMixtureOptions = Options["MutualPropsMixtureOptions"] & { MutualPropsMixtureOptions: Options["MutualPropsMixtureOptions"] }
-    > = Intersect<
-        // Replace `PropsMixture` by a more generic one that can also mix primitives (and arrays)
-        // => Current behaviour: { a: { a: "a1" } }, { a: { a: "a2"} } results in { a: { a: never } }, because the a.a's are muatated in PropsMixture, but flank props are working as expected :)
-        { [K in DualContentKeychain["MutualOptionalKeys"]]?: PropsMixture<PureDualContent<DualContent["LeftContent"][K], DualContent["RightContent"][K]>, __RecursiveOptions, $, __RecursiveOptions>; },
-        { [K in DualContentKeychain["MutualRequiredKeys"]]: PropsMixture<PureDualContent<DualContent["LeftContent"][K], DualContent["RightContent"][K]>, __RecursiveOptions, $, __RecursiveOptions>; }
-    >;
+// type RecursiveMutualPropsMixture<
+//     DualContent extends DefaultDualContent,
+//     Options extends PropsMixtureOptions,
+//     DualContentKeychain extends FlankValuesKeychain<DualContent> = FlankValuesKeychain<DualContent>,
+//     __RecursiveOptions extends PropsMixtureOptions = Options["MutualPropsMixtureOptions"] & { MutualPropsMixtureOptions: Options["MutualPropsMixtureOptions"] }
+//     > = Intersect<
+//         // Replace `PropsMixture` by a more generic one that can also mix primitives (and arrays)
+//         // => Current behaviour: { a: { a: "a1" } }, { a: { a: "a2"} } results in { a: { a: never } }, because the a.a's are muatated in PropsMixture, but flank props are working as expected :)
+//         { [K in DualContentKeychain["MutualOptionalKeys"]]?: PropsMixture<PureDualContent<DualContent["LeftContent"][K], DualContent["RightContent"][K]>, __RecursiveOptions, $, __RecursiveOptions>; },
+//         { [K in DualContentKeychain["MutualRequiredKeys"]]: PropsMixture<PureDualContent<DualContent["LeftContent"][K], DualContent["RightContent"][K]>, __RecursiveOptions, $, __RecursiveOptions>; }
+//     >;
 
 /**
  * TODO: `IntersectProps<PureDualContent<{ a: { a: "" } }, { a: { a: "", b: "" } }>>` results in `const testtt24: { a: { a: ""; } | { a: ""; b: ""; }; }`
  * => Deep intersection and side union is required
  */
 /** A subtype of `PropsMixture`. Not intended to be called directly. */
-type MutualPropsMixture<
-    DualContent extends DefaultDualContent,
-    Options extends PropsMixtureOptions,
-    DualContentKeychain extends FlankValuesKeychain<DualContent> = FlankValuesKeychain<DualContent>
-    > = (
-        // {
-        //     _: {
-        //         mutual_props:
-        //         {
-        //             options: Options,
-        //             mutual_keys: DualContentKeychain["MutualKeys"]
-        //         }
-        //     }
-        // } &
-        true extends Options["MutualPropsMixtureOptions"]["Recursive"]
-        ? RecursiveMutualPropsMixture<DualContent, Options, DualContentKeychain>
-        : Intersect<
-            // Optional props
-            { [K in DualContentKeychain["MutualOptionalKeys"]]?: DualContent["LeftContent"][K] | DualContent["RightContent"][K]; },
-            // Required props
-            { [K in DualContentKeychain["MutualRequiredKeys"]]: DualContent["LeftContent"][K] | DualContent["RightContent"][K]; }
-        >
-    );
+// type MutualPropsMixture<
+//     DualContent extends DefaultDualContent,
+//     Options extends PropsMixtureOptions,
+//     DualContentKeychain extends FlankValuesKeychain<DualContent> = FlankValuesKeychain<DualContent>
+//     > = (
+//         // {
+//         //     _: {
+//         //         mutual_props:
+//         //         {
+//         //             options: Options,
+//         //             mutual_keys: DualContentKeychain["MutualKeys"]
+//         //         }
+//         //     }
+//         // } &
+//         true extends Options["MutualPropsMixtureOptions"]["Recursive"]
+//         ? RecursiveMutualPropsMixture<DualContent, Options, DualContentKeychain>
+//         : Intersect<
+//             // Optional props
+//             { [K in DualContentKeychain["MutualOptionalKeys"]]?: DualContent["LeftContent"][K] | DualContent["RightContent"][K]; },
+//             // Required props
+//             { [K in DualContentKeychain["MutualRequiredKeys"]]: DualContent["LeftContent"][K] | DualContent["RightContent"][K]; }
+//         >
+//     );
 
-type MutualExtendiblePropsMixture<
-    DualContent extends DefaultDualContent,
-    LeftMutualPick,
-    RightMutualPick,
-    __LeftMutualPick = LeftMutualPick extends DualContent["LeftContent"] ? DualContent["LeftContent"] : LeftMutualPick,
-    __RightMutualPick = RightMutualPick extends DualContent["RightContent"] ? DualContent["RightContent"] : RightMutualPick
-    > = (
-        If<
-            /* Overall we want check if smaller fits into bigger */
-            And<Extends<LeftMutualPick, RightMutualPick>, Extends<RightMutualPick, LeftMutualPick>>,
-            __LeftMutualPick & __RightMutualPick,
-            If<
-                Extends<LeftMutualPick, RightMutualPick>,
-                __LeftMutualPick,
-                __RightMutualPick
-            >
-        >
-    );
+// type MutualExtendiblePropsMixture<
+//     DualContent extends DefaultDualContent,
+//     LeftMutualPick,
+//     RightMutualPick,
+//     __LeftMutualPick = LeftMutualPick extends DualContent["LeftContent"] ? DualContent["LeftContent"] : LeftMutualPick,
+//     __RightMutualPick = RightMutualPick extends DualContent["RightContent"] ? DualContent["RightContent"] : RightMutualPick
+//     > = (
+//         If<
+//             /* Overall we want check if smaller fits into bigger */
+//             And<Extends<LeftMutualPick, RightMutualPick>, Extends<RightMutualPick, LeftMutualPick>>,
+//             __LeftMutualPick & __RightMutualPick,
+//             If<
+//                 Extends<LeftMutualPick, RightMutualPick>,
+//                 __LeftMutualPick,
+//                 __RightMutualPick
+//             >
+//         >
+//     );
 
-type PreMutualPropsMixture<
-    DualContent extends DefaultDualContent,
-    Options extends PropsMixtureOptions,
-    DualContentKeychain extends FlankValuesKeychain<DualContent> = FlankValuesKeychain<DualContent>,
-    __LeftMutualPick = PickOrNever<DualContent["LeftContent"], DualContentKeychain["MutualKeys"]>,
-    __RightMutualPick = PickOrNever<DualContent["RightContent"], DualContentKeychain["MutualKeys"]>,
-    > = (
-        __LeftMutualPick extends __RightMutualPick
-        // If L extends R ..
-        ? MutualExtendiblePropsMixture<DualContent, __LeftMutualPick, __RightMutualPick>
-        : __RightMutualPick extends __LeftMutualPick
-        // .. or if R extends L ..
-        ? MutualExtendiblePropsMixture<DualContent, __LeftMutualPick, __RightMutualPick>
-        // .. otherwise mix L and R
-        : MutualPropsMixture<DualContent, Options, DualContentKeychain>
-    );
+// type PreMutualPropsMixture<
+//     DualContent extends DefaultDualContent,
+//     Options extends PropsMixtureOptions,
+//     DualContentKeychain extends FlankValuesKeychain<DualContent> = FlankValuesKeychain<DualContent>,
+//     __LeftMutualPick = PickOrNever<DualContent["LeftContent"], DualContentKeychain["MutualKeys"]>,
+//     __RightMutualPick = PickOrNever<DualContent["RightContent"], DualContentKeychain["MutualKeys"]>,
+//     > = (
+//         __LeftMutualPick extends __RightMutualPick
+//         // If L extends R ..
+//         ? MutualExtendiblePropsMixture<DualContent, __LeftMutualPick, __RightMutualPick>
+//         : __RightMutualPick extends __LeftMutualPick
+//         // .. or if R extends L ..
+//         ? MutualExtendiblePropsMixture<DualContent, __LeftMutualPick, __RightMutualPick>
+//         // .. otherwise mix L and R
+//         : MutualPropsMixture<DualContent, Options, DualContentKeychain>
+//     );
 
 /** A Property-Mixture */
-export type PropsMixture<
-    DualContent extends DefaultDualContent,
-    Options extends DeepPartial<PropsMixtureOptions> = DefaultPropsMixtureOptions,
-    CanContentMutate = $,
-    __Options extends PropsMixtureOptions = DualContentSpread<DefaultPropsMixtureOptions, Options, { Recursive: true, OverwriteMode: "Extend", MutualKeySignature: "Left", ComparableContent: PropsMixtureOptions }>,
-    __DualContent extends ImpureFlankContent<DualContent, __Options["ContentMutations"], CanContentMutate> = ImpureFlankContent<DualContent, __Options["ContentMutations"], CanContentMutate>,
-    __DualContentKeychain extends FlankValuesKeychain<__DualContent> = FlankValuesKeychain<__DualContent>,
-    __DualRemnantKeychain extends DualRemnantKeychain<__DualContentKeychain> =DualRemnantKeychain<__DualContentKeychain>
-    > = (
-        // {
-        //     _: {
-        //         "props": {
-        //             __Options: __Options,
-        //             // DualContent: DualContent,
-        //             // __DualContent: __DualContent
-        //             // __DualContentKeychainMutualKeys: __DualContentKeychain["MutualKeys"]
-        //         },
-        //     },
-        // } &
-        Intersect<
-            Intersect<
-                (
-                    ExtractOrUnknown<__Options["MixtureKind"], MixtureKinds["Intersection"]> extends MixtureKinds["Intersection"]
-                    ? (
-                        __DualContentKeychain["MutualKeys"] extends never
-                        // When there is no mutual key, then we know, that there will nothing
-                        ? never
-                        : PreMutualPropsMixture<__DualContent, __Options, __DualContentKeychain>
-                    )
-                    : never
-                ), (
-                    ExtractOrUnknown<__Options["MixtureKind"], FlankOrLeftUnionMixtureKind> extends FlankOrLeftUnionMixtureKind
-                    ? PickOrNever<__DualContent["LeftContent"], __DualRemnantKeychain["LeftRemnant"]["Keys"]>
-                    : never
-                )
-            >, (
-                ExtractOrUnknown<__Options["MixtureKind"], FlankOrRightUnionMixtureKind> extends FlankOrRightUnionMixtureKind
-                ? PickOrNever<__DualContent["RightContent"], __DualRemnantKeychain["RightRemnant"]["Keys"]>
-                : never
-            )
-        >
-    );
+// export type PropsMixture<
+//     DualContent extends DefaultDualContent,
+//     Options extends DeepPartial<PropsMixtureOptions> = DefaultPropsMixtureOptions,
+//     CanContentMutate = $,
+//     __Options extends PropsMixtureOptions = DualContentSpread<DefaultPropsMixtureOptions, Options, { Recursive: true, OverwriteMode: "Extend", MutualKeySignature: "Left", ComparableContent: PropsMixtureOptions }>,
+//     __DualContent extends ImpureFlankContent<DualContent, __Options["ContentMutations"], CanContentMutate> = ImpureFlankContent<DualContent, __Options["ContentMutations"], CanContentMutate>,
+//     __DualContentKeychain extends FlankValuesKeychain<__DualContent> = FlankValuesKeychain<__DualContent>,
+//     __DualRemnantKeychain extends DualRemnantKeychain<__DualContentKeychain> =DualRemnantKeychain<__DualContentKeychain>
+//     > = (
+//         // {
+//         //     _: {
+//         //         "props": {
+//         //             __Options: __Options,
+//         //             // DualContent: DualContent,
+//         //             // __DualContent: __DualContent
+//         //             // __DualContentKeychainMutualKeys: __DualContentKeychain["MutualKeys"]
+//         //         },
+//         //     },
+//         // } &
+//         Intersect<
+//             Intersect<
+//                 (
+//                     ExtractOrUnknown<__Options["MixtureKind"], MixtureKinds["Intersection"]> extends MixtureKinds["Intersection"]
+//                     ? (
+//                         __DualContentKeychain["MutualKeys"] extends never
+//                         // When there is no mutual key, then we know, that there will nothing
+//                         ? never
+//                         : PreMutualPropsMixture<__DualContent, __Options, __DualContentKeychain>
+//                     )
+//                     : never
+//                 ), (
+//                     ExtractOrUnknown<__Options["MixtureKind"], FlankOrLeftUnionMixtureKind> extends FlankOrLeftUnionMixtureKind
+//                     ? PickOrNever<__DualContent["LeftContent"], __DualRemnantKeychain["LeftRemnant"]["Keys"]>
+//                     : never
+//                 )
+//             >, (
+//                 ExtractOrUnknown<__Options["MixtureKind"], FlankOrRightUnionMixtureKind> extends FlankOrRightUnionMixtureKind
+//                 ? PickOrNever<__DualContent["RightContent"], __DualRemnantKeychain["RightRemnant"]["Keys"]>
+//                 : never
+//             )
+//         >
+//     );
 
 type test56 = unknown extends never ? true : false;
 
@@ -697,14 +727,15 @@ export interface DefaultPrimPropsMixtureOptions extends PrimPropsMixtureOptions 
     PropsIntersectionOptions: DefaultPropsMixtureOptions;
 }
 
-export type PrimPropsMixture<
-    DualContent extends DefaultDualContent,
-    Options extends DeepPartial<PrimPropsMixtureOptions> = DefaultPrimPropsMixtureOptions,
-    __Options extends PrimPropsMixtureOptions = DualContentSpread<DefaultPrimPropsMixtureOptions, Options, { Recursive: true, OverwriteMode: "Extend", MutualKeySignature: "Left", ComparableContent: PrimPropsMixtureOptions }>,
-    > = (
-        PrimitivesMixture<DualContent, __Options["PrimitiveIntersectionOptions"], __Options["PrimitiveIntersectionOptions"]>
-        | PropsMixture<DualContent, __Options["PropsIntersectionOptions"], $, __Options["PropsIntersectionOptions"]>
-    );
+// FEATURE: PRIM PROPS MIXTURE
+// export type PrimPropsMixture<
+//     DualContent extends DefaultDualContent,
+//     Options extends DeepPartial<PrimPropsMixtureOptions> = DefaultPrimPropsMixtureOptions,
+//     __Options extends PrimPropsMixtureOptions = DualContentSpread<DefaultPrimPropsMixtureOptions, Options, { Recursive: true, OverwriteMode: "Extend", MutualKeySignature: "Left", ComparableContent: PrimPropsMixtureOptions }>,
+//     > = (
+//         PrimitivesMixture<DualContent, __Options["PrimitiveIntersectionOptions"], __Options["PrimitiveIntersectionOptions"]>
+//         | PropsMixture<DualContent, __Options["PropsIntersectionOptions"], $, __Options["PropsIntersectionOptions"]>
+//     );
 
 // declare const tttt: test3456;
 // tttt.PropsOptions.ValueOptions
@@ -733,7 +764,7 @@ type testtt_0 = PureDualContent<a1, a2>;
 // type testtt_0 = PureDualContent<{ a: { a: "a1" } }, { a: { a: "a2" } }>;
 // type testtt_0_0_1 = PureDualContent<{ a: { a: "" } }, { a: { a: "", b: "" } }>;
 type testtt_0_1 = ImpureFlankContent<testtt_0, ["ExcludeObject"]>;
-type testtt23 = PrimitivesMixture<testtt_0_1>;
+// type testtt23 = PrimitivesMixture<testtt_0_1>;
 type testtt_0_2 = ImpureFlankContent<testtt_0, ["ExtractObject"]>;
 // declare const testtt24: PropsMixture<testtt_0, { MixtureKind: "Intersection", MutualPropsMixtureOptions: { ContentMutations: undefined, MixtureKind: "Intersection" | "FlankUnion", Recursive: true } }>;
 // declare const testtt24: PropsMixture<testtt_0, { MixtureKind: "Intersection" }>;
@@ -756,22 +787,23 @@ export interface DefaultArrayMixtureOptions extends ArrayMixtureOptions {
     PrimPropsMixtureOptions: DefaultPrimPropsMixtureOptions;
 }
 
-export type ArrayMixture<
-    DualContent extends DefaultDualContent,
-    Options extends DeepPartial<ArrayMixtureOptions> = DefaultArrayMixtureOptions,
-    __Options extends ArrayMixtureOptions = DualContentSpread<DefaultArrayMixtureOptions, Options, { OverwriteMode: "Extend", MutualKeySignature: "Left", ComparableContent: ArrayMixtureOptions }>,
-    __DualContent extends ImpureFlankContent<DualContent, __Options["ContentMutations"]> = ImpureFlankContent<DualContent, __Options["ContentMutations"]>
-    > = (
-        __DualContent["LeftContent"] extends Array<infer LeftTypes>
-        ? __DualContent["RightContent"] extends Array<infer RightTypes>
-        ? Array<PrimPropsMixture<PureDualContent<LeftTypes, RightTypes>, __Options["PrimPropsMixtureOptions"], __Options["PrimPropsMixtureOptions"]>>
-        : never
-        : never
-    );
+// FEATURE: ARRAY MIXTURE
+// export type ArrayMixture<
+//     DualContent extends DefaultDualContent,
+//     Options extends DeepPartial<ArrayMixtureOptions> = DefaultArrayMixtureOptions,
+//     __Options extends ArrayMixtureOptions = DualContentSpread<DefaultArrayMixtureOptions, Options, { OverwriteMode: "Extend", MutualKeySignature: "Left", ComparableContent: ArrayMixtureOptions }>,
+//     __DualContent extends ImpureFlankContent<DualContent, __Options["ContentMutations"]> = ImpureFlankContent<DualContent, __Options["ContentMutations"]>
+//     > = (
+//         __DualContent["LeftContent"] extends Array<infer LeftTypes>
+//         ? __DualContent["RightContent"] extends Array<infer RightTypes>
+//         ? Array<PrimPropsMixture<PureDualContent<LeftTypes, RightTypes>, __Options["PrimPropsMixtureOptions"], __Options["PrimPropsMixtureOptions"]>>
+//         : never
+//         : never
+//     );
 
 // // type test56_0 = Exclude {} | (number | string | { a: "a2" })[]
 type test59 = PureDualContent<string | (string | { a: "a" })[] | (undefined)[] | bigint, {} | number | (undefined)[] | (number | string | { a: "a2" })[]>;
-declare const test59_1: ArrayMixture<test59>;
+// declare const test59_1: ArrayMixture<test59>;
 
 
 // type test61 = ValueContent<[number] | any[], "ExtractArray", $>;
@@ -788,177 +820,10 @@ export type ArrPrimPropsMixture<
     > = true;
 
 
-
-// declare const testtt24: IntersectProps<testtt_0>;
-// testtt24.
-// type testtt55 = FlankValuesKeychain<testtt_0_2>;
-
-// type testtt_1_1 = SpreadFromContent<DefaultPrimitivesAndPropsIntersectionOptions, { PrimitiveOptions: { ValueOptions: [] } }, { OverwriteMode: "extend", MutualKeySignature: "left" }, PrimitivesAndPropsIntersectionOptions>;
-// declare const testtt_1_1: testtt_1_1;
-// testtt_1_1.PrimitiveOptions.
-
-// type testtt = IntersectPrimitivesAndProps<testtt_0, { PropsOptions: undefined }>;
-// type testtt = IntersectPrimitivesAndProps<testtt_0>;
-// type testtt_1 = IntersectProps<testtt_0>;
-
-
-// export type t2345 = [test:];
-
-// type ArrayInnerType<T> = T extends Array<infer InnerType> ? InnerType : never;
-
-// export type IntersectArrays<
-//     A,
-//     B,
-//     ExpandMode extends ExpandModes,
-//     __A extends ArrayInnerType<A> = ArrayInnerType<A>,
-//     __B extends ArrayInnerType<B> = ArrayInnerType<B>,
-//     > = (
-//         If<
-//             Or<Extends<__A, never>, Extends<__A, never>>,
-//             never,
-
-//         >
-//         // Array<IntersectProps<
-//         //     __A,
-//         //     __B,
-//         //     ExpandMode
-//         // >>
-//     );
-
-
-// Or<And<Extends<A, B>, Extends<B, A>>, Extends<ExpandStateMode, ReducerFactoryRetainStateMode>>,
-//         A & B,
-//         {
-//             [K in (__MutualKeys extends (AnyKeys<A> & AnyKeys<B>) ? __MutualKeys : never)]: (
-//                 If<
-//                     Extends<ExpandStateMode, ReducerFactoryInherit>,
-//                     true,
-//                     false
-//                 >
-//             )
-//         }
-
-// /** Does A have any object in his union? Returns export type of true or false. */
-// export type HasExtractableObject<A> = Not<Extends<ExtractObject<A>, never>>;
-
-// export type HasExtractableObjectWithoutArray<A> = Not<Extends<ExtractObjectExceptArray<A>, never>>;
-
-// /** Creates an union of any extractable objects. */
-// export type UnionExtractableObjects<A, B> = If<
-//     // If A or B has object ..
-//     Or<HasExtractableObject<A>, HasExtractableObject<B>>,
-//     // .. then return the one or the other object
-//     ExtractObject<A> | ExtractObject<B>,
-//     // .. else
-//     {}
-// >;
-
-// // // // // // /** Combines only those types that are related to the same property key of object A and B and include the remaining keys of object A. */
-// // // // // // export type UnionPropsExcept<
-// // // // // //     A,
-// // // // // //     B,
-// // // // // //     LR extends DefaultLeftRight2,
-// // // // // //     __X extends LeftRightKeychain<LR>,
-// // // // // //     __AKeys extends AnyKeys<__A> = AnyKeys<__A>,
-// // // // // //     __BKeys extends AnyKeys<__B> = AnyKeys<__B>,
-// // // // // //     __MutualKeys extends __AKeys & __BKeys = __AKeys & __BKeys,
-// // // // // //     __AKeysWithoutMutualKeys extends TakeFirstIfMatchExtendsNotCase<__MutualKeys, Exclude<__AKeys, __MutualKeys>, __AKeys> = TakeFirstIfMatchExtendsNotCase<__MutualKeys, Exclude<__AKeys, __MutualKeys>, __AKeys>,
-// // // // // //     __IntersectedProps extends (
-// // // // // //         IntersectProps<
-// // // // // //             A,
-// // // // // //             B,
-// // // // // //             __A,
-// // // // // //             __B,
-// // // // // //             __AKeys,
-// // // // // //             __BKeys,
-// // // // // //             __MutualKeys>
-// // // // // //     ) = (
-// // // // // //         IntersectProps<
-// // // // // //             A,
-// // // // // //             B,
-// // // // // //             __A,
-// // // // // //             __B,
-// // // // // //             __AKeys,
-// // // // // //             __BKeys,
-// // // // // //             __MutualKeys>
-// // // // // //     )
-// // // // // //     > = (
-// // // // // //         If<
-// // // // // //             /* Overall we want to check if smaller fits into bigger */
-// // // // // //             Extends<__IntersectedProps, __A>,
-// // // // // //             If<
-// // // // // //                 Extends<__A, A>,
-// // // // // //                 A,
-// // // // // //                 __A
-// // // // // //             >,
-// // // // // //             __IntersectedProps
-// // // // // //         >
-// // // // // //     );
-
-// /** Combines only those types that are related to the same property key of object A and B and include the remaining keys of object A and B. */
-// export type UnionProps<
-//     A,
-//     B,
-//     ExpandStateMode extends ExpandModes,
-//     __MutualKeys extends IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>> = IntersectPrimitiveTypes<AnyKeys<A>, AnyKeys<B>>,
-//     __LeftKeys extends IfNot3<__MutualKeys, Exclude<AnyKeys<A>, __MutualKeys>, AnyKeys<A>> = IfNot3<__MutualKeys, Exclude<AnyKeys<A>, __MutualKeys>, AnyKeys<A>>,
-//     __RightKeys extends IfNot3<__MutualKeys, Exclude<AnyKeys<B>, __MutualKeys>, AnyKeys<B>> = IfNot3<__MutualKeys, Exclude<AnyKeys<B>, __MutualKeys>, AnyKeys<B>>
-//     > = UnionPropsExcept<A, B, ExpandStateMode, __MutualKeys, __LeftKeys> & Pick<B, __RightKeys>;
-
-
 export type UnionPrimitiveTypesExcept<A, B> = Exclude<A | B, Exclude<B, A> | object>;
 
 /** Create an union of the primitive types of Object A and Object B. */
 export type UnionPrimitiveTypes<A, B> = ExcludeObject<A | B>;
-
-
-// type ArrayInnerType<A> = A extends Array<infer InnerType> ? InnerType : never;
-
-// type IntersectArray<
-// A,
-// B,
-// __A extends ExtractArray<A> = ExtractArray<A>,
-// __B extends ExtractArray<B> = ExtractArray<B>
-// > = __A extends Array<infer ArrA>
-
-
-// // // // // // // // // // // // // // // // // // // // export type IntersectPrimitiveTypesAndArrays<
-// // // // // // // // // // // // // // // // // // // //     A, B,
-// // // // // // // // // // // // // // // // // // // //     __A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
-// // // // // // // // // // // // // // // // // // // //     __B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>,
-// // // // // // // // // // // // // // // // // // // //     > = ExcludeObjectExceptArray<Exclude<__A2 | __B2, Exclude<__A2, __B2> | Exclude<__B2, __A2>>>;
-
-// export type UnionPrimitiveTypesAndArraysExcept<
-//     A, B,
-//     __A2 extends ExcludeObjectExceptArray<A> = ExcludeObjectExceptArray<A>,
-//     __B2 extends ExcludeObjectExceptArray<B> = ExcludeObjectExceptArray<B>
-//     > = Exclude<__A2 | __B2, Exclude<__B2, __A2>>;
-
-// export type UnionPrimitiveTypesAndArrays<A, B> = ExcludeObjectExceptArray<A | B>;
-
-// export type PreferPrimitivesOverProps<Props, Primitives> = If<
-//     And<Not<Extends<Primitives, never>>, And<Extends<Props, {}>, Extends<{}, Props>>>,
-//     Primitives,
-//     Props | Primitives
-// >;
-
-// export type IntersectPropsAndTypes<
-//     A, B,
-//     > = PreferPrimitivesOverProps<IntersectProps<ExtractObjectExceptArray<A>, ExtractObjectExceptArray<B>>, IntersectPrimitiveTypesAndArrays<A, B>>;
-
-// export type UnionPropsAndTypesExcept<
-//     A, B,
-//     > = PreferPrimitivesOverProps<UnionPropsExcept<ExtractObjectExceptArray<A>, ExtractObjectExceptArray<B>>, UnionPrimitiveTypesAndArraysExcept<A, B>>;
-
-// export type UnionPropsAndTypes<
-//     A, B,
-//     > = PreferPrimitivesOverProps<UnionProps<ExtractObjectExceptArray<A>, ExtractObjectExceptArray<B>>, UnionPrimitiveTypesAndArrays<A, B>>;
-
-// export type PropsAndTypesExcept<A, B> = PreferPrimitivesOverProps<If<
-//     And<HasExtractableObjectWithoutArray<A>, HasExtractableObjectWithoutArray<B>>,
-//     Pick<ExtractObjectExceptArray<A>, Exclude<AnyKeys<ExtractObjectExceptArray<A>>, AnyKeys<ExtractObjectExceptArray<B>>>>,
-//     ExtractObjectExceptArray<A>
-// >, Exclude<ExcludeObjectExceptArray<A>, ExcludeObjectExceptArray<B>>>;
 
 interface ITest { a: string; b: { a: string }; c: boolean; };
 
