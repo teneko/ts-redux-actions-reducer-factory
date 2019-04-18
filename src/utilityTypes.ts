@@ -572,13 +572,25 @@ interface BasePropsMixtureOptions {
     MixtureKind: MixtureKindKeys;
 }
 
+export interface MutualPropsMixtureRecursionOptions {
+    PrimsMixtureOptions: PrimsMixtureOptions;
+    BaseArrayMixtureOptions: BaseArrayMixtureOptions;
+}
+
+export interface DefaultMutualPropsMixtureRecursionOptions extends MutualPropsMixtureRecursionOptions {
+    PrimsMixtureOptions: DefaultPrimsMixtureOptions;
+    BaseArrayMixtureOptions: DefaultBaseArrayMixtureOptions;
+}
+
 export interface MutualPropsMixtureOptions extends BasePropsMixtureOptions {
+    RecursionOptions: MutualPropsMixtureRecursionOptions;
     Recursive: boolean;
 }
 
 export interface DefaultMutualPropsMixtureOptions extends MutualPropsMixtureOptions {
     ContentMutations: ["ExtractObject", "ExcludeArray"];
     MixtureKind: "Intersection" | "FlankUnion";
+    RecursiveOptions: DefaultMutualPropsMixtureRecursionOptions;
     Recursive: false;
 }
 
@@ -586,7 +598,7 @@ export interface PropsMixtureOptions extends BasePropsMixtureOptions {
     MutualPropsMixtureOptions: MutualPropsMixtureOptions;
 }
 
-interface DefaultPropsMixtureOptions extends PropsMixtureOptions {
+export interface DefaultPropsMixtureOptions extends PropsMixtureOptions {
     ContentMutations: ["ExtractObject", "ExcludeArray"];
     MixtureKind: "Intersection";
     MutualPropsMixtureOptions: DefaultMutualPropsMixtureOptions;
@@ -597,7 +609,17 @@ type RecursiveMutualPropsMixture<
     DualContent extends DefaultDualContent,
     Options extends PropsMixtureOptions,
     DualContentKeychain extends FlankValuesKeychain<DualContent> = FlankValuesKeychain<DualContent>,
-    __Options extends PropsMixtureOptions = Options["MutualPropsMixtureOptions"] & { MutualPropsMixtureOptions: Options["MutualPropsMixtureOptions"] }
+    // __Options extends PropsMixtureOptions = Options["MutualPropsMixtureOptions"] & { MutualPropsMixtureOptions: Options["MutualPropsMixtureOptions"] }
+    __PropsMixtureOptions extends PropsMixtureOptions = Options["MutualPropsMixtureOptions"] & { MutualPropsMixtureOptions: Options["MutualPropsMixtureOptions"] },
+    __PrimsMixtureOptions extends PrimsMixtureOptions = Options["MutualPropsMixtureOptions"]["RecursionOptions"]["PrimsMixtureOptions"],
+    __Options extends ArrayPrimsPropsMixtureOptions = {
+        PropsMixtureOptions: __PropsMixtureOptions,
+        PrimsMixtureOptions: __PrimsMixtureOptions,
+        ArrayMixtureOptions: Options["MutualPropsMixtureOptions"]["RecursionOptions"]["BaseArrayMixtureOptions"] & {
+            PropsMixtureOptions: __PropsMixtureOptions,
+            PrimsMixtureOptions: __PrimsMixtureOptions,
+        },
+    }
     > = Intersect<
         // Replace `PropsMixture` by a more generic one that can also mix primitives (and arrays)
         // => Current behaviour: { a: { a: "a1" } }, { a: { a: "a2"} } results in { a: { a: never } }, because the a.a's are muatated in PropsMixture, but flank props are working as expected :)
@@ -771,16 +793,23 @@ type test47 = [{}] extends [unknown] ? true : false;
 
 type test589467840 = MixtureKinds["LeftUnion"] extends FlankOrLeftUnionMixtureKind ? true : false;
 
-export interface ArrayMixtureOptions {
+interface BaseArrayMixtureOptions {
     ContentMutations: ContentMutationOrArray;
-    // MixtureKind: MixtureKindKeys;
-    PrimsPropsMixtureOptions: PrimsPropsMixtureOptions;
 }
 
-export interface DefaultArrayMixtureOptions extends ArrayMixtureOptions {
+interface DefaultBaseArrayMixtureOptions extends BaseArrayMixtureOptions {
     ContentMutations: "ExtractArray";
+}
+
+export interface ArrayMixtureOptions extends BaseArrayMixtureOptions, PrimsPropsMixtureOptions {
+    // MixtureKind: MixtureKindKeys;
+    // PrimsPropsMixtureOptions: PrimsPropsMixtureOptions;
+}
+
+export interface DefaultArrayMixtureOptions extends DefaultBaseArrayMixtureOptions, DefaultPrimsPropsMixtureOptions {
+
     // MixtureKind: "Intersection" | "FlankUnion";
-    PrimsPropsMixtureOptions: DefaultPrimsPropsMixtureOptions;
+    // PrimsPropsMixtureOptions: DefaultPrimsPropsMixtureOptions;
 }
 
 // FEATURE: ARRAY MIXTURE
@@ -792,7 +821,7 @@ export type ArrayMixture<
     > = (
         __DualContent["LeftContent"] extends Array<infer LeftTypes>
         ? __DualContent["RightContent"] extends Array<infer RightTypes>
-        ? Array<PrimsPropsMixture<PureDualContent<LeftTypes, RightTypes>, __Options["PrimsPropsMixtureOptions"], __Options["PrimsPropsMixtureOptions"]>>
+        ? Array<PrimsPropsMixture<PureDualContent<LeftTypes, RightTypes>, __Options, __Options>>
         : never
         : never
     );
@@ -808,13 +837,13 @@ type test61 = ValueContent<[number] | any[] | number, "ExcludeObject">;
 // type test60 = PureDualContent<{ a: "a" }, { a: "a2" }>;
 // declare const test60_1: PropsMixture<test60, { MixtureKind: "Intersection" }>;
 
-export interface ArrayPrimsPropsMixtureOptions {
-    PrimsPropsMixtureOptions: PrimsPropsMixtureOptions;
+export interface ArrayPrimsPropsMixtureOptions extends PrimsPropsMixtureOptions {
     ArrayMixtureOptions: ArrayMixtureOptions;
 }
 
 export interface DefaultArrayPrimsPropsMixtureOptions extends ArrayPrimsPropsMixtureOptions {
-    PrimsPropsMixtureOptions: DefaultPrimsPropsMixtureOptions;
+    PrimsMixtureOptions: DefaultPrimsMixtureOptions;
+    PropsMixtureOptions: DefaultPropsMixtureOptions;
     ArrayMixtureOptions: DefaultArrayMixtureOptions;
 }
 
@@ -824,17 +853,18 @@ export type ArrayPrimsPropsMixture<
     Options extends DeepPartial<ArrayPrimsPropsMixtureOptions> = DefaultArrayPrimsPropsMixtureOptions,
     __Options extends ArrayPrimsPropsMixtureOptions = DualContentSpread<DefaultArrayPrimsPropsMixtureOptions, Options, { Recursive: true, OverwriteMode: "Extend", MutualKeySignaturePreserveKind: "Left", ComparableContent: ArrayPrimsPropsMixtureOptions }>,
     > = (
-        PrimsPropsMixture<DualContent, __Options["PrimsPropsMixtureOptions"], __Options["PrimsPropsMixtureOptions"]>
+        PrimsPropsMixture<DualContent, __Options, __Options>
         | ArrayMixture<DualContent, __Options["ArrayMixtureOptions"]>
     );
 
 // // type test56_0 = Exclude {} | (number | string | { a: "a2" })[]
-type test60 = PureDualContent<
-    { a: { b: {} } } | bigint | string | (string | { a: "a" })[] | (undefined)[],
-    { a: { b: {} } } | number | (undefined)[] | (number | string | { a: "a2" })[] | bigint
- >;
+type test60 = PureDualContent<(
+    { a: { b: { c: { a: "a" } } } }
+), (
+    { a: { b: { c: { a: "b" } } } }
+)>;
 // type test60_1 = MutateContent<string | (string | { a: "a" })[] | (undefined)[] | bigint, "ExtractArray">;
-declare const test60_1: ArrayPrimsPropsMixture<test60>;
+declare const test60_1: PropsMixture<test60>;
 
 
 export type UnionPrimitiveTypesExcept<A, B> = Exclude<A | B, Exclude<B, A> | object>;
