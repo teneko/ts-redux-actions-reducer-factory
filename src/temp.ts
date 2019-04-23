@@ -80,7 +80,6 @@ export interface DefaultSpreadOptions<LeftContent> extends SpreadOptions<LeftCon
 }
 
 
-
 /** A subtype of `FlankContentSpread` and `SpreadProperty`. Not intended to be called directly. */
 type SpreadContent<
     LeftContent,
@@ -178,7 +177,11 @@ export type ValueContent<
         : __MutationsLength extends 2 ? MutateContent<MutateContent<Content, __Mutations[0]>, __Mutations[1]>
         : __MutationsLength extends 3 ? MutateContent<MutateContent<MutateContent<Content, __Mutations[0]>, __Mutations[1]>, __Mutations[2]>
         : __MutationsLength extends 4 ? MutateContent<MutateContent<MutateContent<MutateContent<Content, __Mutations[0]>, __Mutations[1]>, __Mutations[2]>, __Mutations[3]>
-        : "The amount of mutations have been exceeded"
+        : {
+            message: "The amount of mutations have been exceeded",
+            mutations: __Mutations,
+            mutations_length: __MutationsLength,
+        }
     );
 
 export type Value<
@@ -360,7 +363,7 @@ export interface PrimsMixtureOptions {
 }
 
 interface DefaultPrimsMixtureOptions extends PrimsMixtureOptions {
-    ContentMutations: [ContentMutations["ExcludeObject"]];
+    ContentMutations: "ExcludeObject";
     MixtureKind: "Intersection";
 }
 
@@ -368,9 +371,10 @@ interface DefaultPrimsMixtureOptions extends PrimsMixtureOptions {
 export type PrimsMixture<
     DualContent extends DefaultDualContent,
     Options extends DeepPartial<PrimsMixtureOptions> = DefaultPrimsMixtureOptions,
-    __Options extends PrimsMixtureOptions = DualContentSpread<DefaultPrimsMixtureOptions, Options, { OverwriteMode: "Extend", MutualKeySignaturePreserveKind: "Left", ComparableContent: PrimsMixtureOptions }>,
+    __Options extends PrimsMixtureOptions = DualContentSpread<DefaultPrimsMixtureOptions, Options, { Recursive: false, OverwriteMode: "Extend", MutualKeySignaturePreserveKind: "Left", ComparableContent: PrimsMixtureOptions }>,
     __DualContent extends ImpureFlankContent<DualContent, __Options["ContentMutations"]> = ImpureFlankContent<DualContent, __Options["ContentMutations"]>,
     __Intersection = Intersect<__DualContent["LeftContent"], __DualContent["RightContent"]>
+    // > = Options["ContentMutations"];
     > = (
         ExtractOrUnknown<__Options["MixtureKind"], MixtureKinds["Intersection"]> extends MixtureKinds["Intersection"]
         ? __Intersection
@@ -420,6 +424,28 @@ export type ArrayMixture<
     );
 
 
+export interface ArrayPrimsMixtureOptions {
+    ArrayMixtureOptions: ArrayMixtureOptions;
+    PrimsMixtureOptions: PrimsMixtureOptions;
+}
+
+export interface DefaultArrayPrimsMixtureOptions extends ArrayPrimsMixtureOptions {
+    ArrayMixtureOptions: DefaultArrayMixtureOptions;
+    PrimsMixtureOptions: DefaultPrimsMixtureOptions;
+}
+
+// FEATURE: PRIM PROPS MIXTURE
+export type ArrayPrimsMixture<
+    DualContent extends DefaultDualContent,
+    Options extends DeepPartial<ArrayPrimsMixtureOptions> = DefaultArrayPrimsMixtureOptions,
+    __Options extends ArrayPrimsMixtureOptions = DualContentSpread<DefaultArrayPrimsMixtureOptions, Options, { Recursive: true, OverwriteMode: "Extend", MutualKeySignaturePreserveKind: "Left", ComparableContent: ArrayPrimsMixtureOptions }>,
+    > = (
+        ArrayMixture<DualContent, __Options["ArrayMixtureOptions"], __Options["ArrayMixtureOptions"]>
+        | PrimsMixture<DualContent, __Options["PrimsMixtureOptions"], __Options["PrimsMixtureOptions"]>
+    );
+
+
+
 interface BasePropsMixtureOptions {
     ContentMutations: ContentMutationOrArray;
     MixtureKind: MixtureKindKeys;
@@ -443,7 +469,7 @@ export interface MutualPropsMixtureOptions extends BasePropsMixtureOptions {
 export interface DefaultMutualPropsMixtureOptions extends MutualPropsMixtureOptions {
     ContentMutations: ["ExtractObject", "ExcludeArray"];
     MixtureKind: "Intersection" | "FlankUnion";
-    RecursiveOptions: DefaultMutualPropsMixtureRecursionOptions;
+    RecursionOptions: DefaultMutualPropsMixtureRecursionOptions;
     Recursive: false;
 }
 
@@ -457,8 +483,31 @@ export interface DefaultPropsMixtureOptions extends PropsMixtureOptions {
     MutualPropsMixtureOptions: DefaultMutualPropsMixtureOptions;
 }
 
+type PostRcursionMutualPropsMixture<
+DualContent extends DefaultDualContent,
+    Options extends PropsMixtureOptions,
+    DualContentKeychain extends FlankValuesKeychain<DualContent> = FlankValuesKeychain<DualContent>,
+    // __Options extends PropsMixtureOptions = Options["MutualPropsMixtureOptions"] & { MutualPropsMixtureOptions: Options["MutualPropsMixtureOptions"] }
+    __PropsMixtureOptions extends PropsMixtureOptions = Options["MutualPropsMixtureOptions"] & { MutualPropsMixtureOptions: Options["MutualPropsMixtureOptions"] },
+    __PrimsMixtureOptions extends PrimsMixtureOptions = Options["MutualPropsMixtureOptions"]["RecursionOptions"]["PrimsMixtureOptions"],
+    __Options extends ArrayPrimsPropsMixtureOptions = {
+        PropsMixtureOptions: __PropsMixtureOptions,
+        PrimsMixtureOptions: __PrimsMixtureOptions,
+        ArrayMixtureOptions: Options["MutualPropsMixtureOptions"]["RecursionOptions"]["BaseArrayMixtureOptions"] & {
+            PropsMixtureOptions: __PropsMixtureOptions,
+            PrimsMixtureOptions: __PrimsMixtureOptions,
+        },
+    }
+> = (
+    DualContent["LeftContent"] extends object ? (
+        DualContent["RightContent"] extends object
+        ? PrimsPropsMixture<PureDualContent<DualContent["LeftContent"][K], DualContent["RightContent"][K]>, __Options, __Options>
+    : NonPropsMixture<DualContent, __Options>)
+    : NonPropsMixture<DualContent, __Options>
+);
+
 /** A subtype of `MutualPropsMixture`. Not intended to be called directly. */
-type RecursiveMutualPropsMixture<
+type RecursionMutualPropsMixture<
     DualContent extends DefaultDualContent,
     Options extends PropsMixtureOptions,
     DualContentKeychain extends FlankValuesKeychain<DualContent> = FlankValuesKeychain<DualContent>,
@@ -478,8 +527,16 @@ type RecursiveMutualPropsMixture<
         // => Current behaviour: { a: { a: "a1" } }, { a: { a: "a2"} } results in { a: { a: never } }, because the a.a's are muatated in PropsMixture, but flank props are working as expected :)
         // { [K in DualContentKeychain["MutualOptionalKeys"]]?: ArrayPrimsPropsMixture<PureDualContent<DualContent["LeftContent"][K], DualContent["RightContent"][K]>, __Options, __Options>; },
         // { [K in DualContentKeychain["MutualRequiredKeys"]]: ArrayPrimsPropsMixture<PureDualContent<DualContent["LeftContent"][K], DualContent["RightContent"][K]>, __Options, __Options>; }
-        { [K in DualContentKeychain["MutualOptionalKeys"]]?: PropsMixture<PureDualContent<DualContent["LeftContent"][K], DualContent["RightContent"][K]>, __Options["PropsMixtureOptions"], __Options["PropsMixtureOptions"]>; },
-        { [K in DualContentKeychain["MutualRequiredKeys"]]: PropsMixture<PureDualContent<DualContent["LeftContent"][K], DualContent["RightContent"][K]>, __Options["PropsMixtureOptions"], __Options["PropsMixtureOptions"]>; }
+        {
+            [K in DualContentKeychain["MutualOptionalKeys"]]?: DualContent["LeftContent"] extends object ? (
+                DualContent["RightContent"] extends object
+                ? PrimsPropsMixture<PureDualContent<DualContent["LeftContent"][K], DualContent["RightContent"][K]>, __Options, __Options>
+            : NonPropsMixture<DualContent, __Options>)
+            : NonPropsMixture<DualContent, __Options>;
+        },
+        { [K in DualContentKeychain["MutualRequiredKeys"]]: PrimsPropsMixture<PureDualContent<DualContent["LeftContent"][K], DualContent["RightContent"][K]>, __Options, __Options>; }
+    // { [K in DualContentKeychain["MutualOptionalKeys"]]?: PropsMixture<PureDualContent<DualContent["LeftContent"][K], DualContent["RightContent"][K]>, __Options["PropsMixtureOptions"], __Options["PropsMixtureOptions"]>; },
+    // { [K in DualContentKeychain["MutualRequiredKeys"]]: PropsMixture<PureDualContent<DualContent["LeftContent"][K], DualContent["RightContent"][K]>, __Options["PropsMixtureOptions"], __Options["PropsMixtureOptions"]>; }
     >;
 
 /**
@@ -487,7 +544,7 @@ type RecursiveMutualPropsMixture<
  * => Deep intersection and side union is required
  */
 /** A subtype of `PropsMixture`. Not intended to be called directly. */
-type NonRecursiveMutualPropsMixture<
+type PreRecursionMutualPropsMixture<
     DualContent extends DefaultDualContent,
     Options extends PropsMixtureOptions,
     DualContentKeychain extends FlankValuesKeychain<DualContent> = FlankValuesKeychain<DualContent>
@@ -501,7 +558,8 @@ type NonRecursiveMutualPropsMixture<
         //         }
         //     }
         // } &
-        true extends Options["MutualPropsMixtureOptions"]["Recursive"] ? RecursiveMutualPropsMixture<DualContent, Options, DualContentKeychain>
+        true extends Options["MutualPropsMixtureOptions"]["Recursive"]
+        ? RecursionMutualPropsMixture<DualContent, Options, DualContentKeychain>
         : Intersect<
             // Optional props
             { [K in DualContentKeychain["MutualOptionalKeys"]]?: DualContent["LeftContent"][K] | DualContent["RightContent"][K]; },
@@ -541,8 +599,33 @@ type PreMutualPropsMixture<
         // .. or if R extends L ..
         : __RightMutualPick extends __LeftMutualPick ? ExtendedPropsMixture<DualContent, __LeftMutualPick, __RightMutualPick>
         // .. otherwise mix L and R
-        : NonRecursiveMutualPropsMixture<DualContent, Options, DualContentKeychain>
+        : PreRecursionMutualPropsMixture<DualContent, Options, DualContentKeychain>
     );
+
+// export type NonPropsMixture<
+//     DualContent extends DefaultDualContent,
+//     Options extends PropsMixtureOptions,
+//     __PropsMixtureOptions extends PropsMixtureOptions = Options["MutualPropsMixtureOptions"] & { MutualPropsMixtureOptions: Options["MutualPropsMixtureOptions"] },
+//     __PrimsMixtureOptions extends PrimsMixtureOptions = Options["MutualPropsMixtureOptions"]["RecursionOptions"]["PrimsMixtureOptions"],
+//     // __Options extends ArrayPrimsMixtureOptions = {
+//     //     PrimsMixtureOptions: __PrimsMixtureOptions,
+//     //     ArrayMixtureOptions: Options["MutualPropsMixtureOptions"]["RecursionOptions"]["BaseArrayMixtureOptions"] & {
+//     //         PropsMixtureOptions: __PropsMixtureOptions,
+//     //         PrimsMixtureOptions: __PrimsMixtureOptions,
+//     //     },
+//     // }
+//         __ArrayMixtureOptions extends ArrayMixtureOptions = Options["MutualPropsMixtureOptions"]["RecursionOptions"]["BaseArrayMixtureOptions"] & {
+//             PropsMixtureOptions: __PropsMixtureOptions,
+//             PrimsMixtureOptions: __PrimsMixtureOptions,
+//         },
+//     > = (
+//         DualContent["LeftContent"] extends any[] ? (
+//             DualContent["RightContent"] extends any[]
+//             ? ArrayMixture<DualContent, __ArrayMixtureOptions, __ArrayMixtureOptions>
+//             : never
+//         )
+//         : never
+//     );
 
 /** A Property-Mixture */
 export type PropsMixture<
@@ -555,49 +638,34 @@ export type PropsMixture<
     > = (
         // {
         //     _: {
-        //         "props": {
-        //             __Options: __Options,
-        //             // DualContent: DualContent,
-        //             // __DualContent: __DualContent
-        //             // __DualContentKeychainMutualKeys: __DualContentKeychain["MutualKeys"]
-        //         },
+        //         __Options: __Options,
         //     },
         // } &
         // We want to intersect (&) a possible left picked object, a possible shared properties picked object and a possible right picked object
-        Intersect<
-            Intersect<
-                (
-                    ExtractOrUnknown<__Options["MixtureKind"], MixtureKinds["Intersection"]> extends MixtureKinds["Intersection"]
-                    ? (
-                        __DualContentKeychain["MutualKeys"] extends never
-                        // When there is no shared property, then we know the picking object remains empty
-                        ? never
-                        : PreMutualPropsMixture<__DualContent, __Options, __DualContentKeychain>
+
+         Intersect<
+                Intersect<
+                    (
+                        ExtractOrUnknown<__Options["MixtureKind"], MixtureKinds["Intersection"]> extends MixtureKinds["Intersection"]
+                        ? (
+                            __DualContentKeychain["MutualKeys"] extends never
+                            // When there is no shared property, then we know the picking object remains empty
+                            ? never
+                            : PreMutualPropsMixture<__DualContent, __Options, __DualContentKeychain>
+                        )
+                        : never
+                    ), (
+                        ExtractOrUnknown<__Options["MixtureKind"], FlankOrLeftUnionMixtureKind> extends FlankOrLeftUnionMixtureKind
+                        ? PickOrNever<__DualContent["LeftContent"], __DualRemnantKeychain["LeftRemnant"]["Keys"]>
+                        : never
                     )
-                    : never
-                ), (
-                    ExtractOrUnknown<__Options["MixtureKind"], FlankOrLeftUnionMixtureKind> extends FlankOrLeftUnionMixtureKind
-                    ? PickOrNever<__DualContent["LeftContent"], __DualRemnantKeychain["LeftRemnant"]["Keys"]>
+                >, (
+                    ExtractOrUnknown<__Options["MixtureKind"], FlankOrRightUnionMixtureKind> extends FlankOrRightUnionMixtureKind
+                    ? PickOrNever<__DualContent["RightContent"], __DualRemnantKeychain["RightRemnant"]["Keys"]>
                     : never
                 )
-            >, (
-                ExtractOrUnknown<__Options["MixtureKind"], FlankOrRightUnionMixtureKind> extends FlankOrRightUnionMixtureKind
-                ? PickOrNever<__DualContent["RightContent"], __DualRemnantKeychain["RightRemnant"]["Keys"]>
-                : never
-            )
-        >
+            >
     );
-
-
-export interface ArrayPrimsPropsMixtureOptions extends PrimsPropsMixtureOptions {
-    ArrayMixtureOptions: ArrayMixtureOptions;
-}
-
-export interface DefaultArrayPrimsPropsMixtureOptions extends ArrayPrimsPropsMixtureOptions {
-    PrimsMixtureOptions: DefaultPrimsMixtureOptions;
-    PropsMixtureOptions: DefaultPropsMixtureOptions;
-    ArrayMixtureOptions: DefaultArrayMixtureOptions;
-}
 
 
 export interface PrimsPropsMixtureOptions {
@@ -620,6 +688,17 @@ export type PrimsPropsMixture<
         | PropsMixture<DualContent, __Options["PropsMixtureOptions"], __Options["PropsMixtureOptions"]>
     );
 
+
+
+export interface ArrayPrimsPropsMixtureOptions extends PrimsPropsMixtureOptions {
+    ArrayMixtureOptions: ArrayMixtureOptions;
+}
+
+export interface DefaultArrayPrimsPropsMixtureOptions extends ArrayPrimsPropsMixtureOptions {
+    PrimsMixtureOptions: DefaultPrimsMixtureOptions;
+    PropsMixtureOptions: DefaultPropsMixtureOptions;
+    ArrayMixtureOptions: DefaultArrayMixtureOptions;
+}
 
 // FEATURE: PRIM PROPS MIXTURE
 export type ArrayPrimsPropsMixture<
