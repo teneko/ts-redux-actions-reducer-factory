@@ -2,7 +2,7 @@ import { AnyKeys, ExcludeArray, ExcludeObject, Extends, ExtractArray, ExtractObj
 import { ActionFunctions } from "redux-actions";
 import { And, If, Not, Or } from "typescript-logic";
 import { } from "typescript-tuple";
-import { Intersect, ValueContent, ImpureDualContent, PureDualContent, FlankValuesKeychain, SingleRemnantKeychain, ImpureFlankContent, MixtureKinds, FlankOrLeftUnionMixtureKind, ArrayMixture, PropsMixture, Value, DeepStructure, MutateContent } from "./temp";
+import { Intersect, ValueContent, ImpureDualContent, PureDualContent, FlankValuesKeychain, SingleRemnantKeychain, ImpureFlankContent, MixtureKinds, FlankOrLeftUnionMixtureKind, UncheckedArrayMixture, PropsMixture, Value, DeepStructure, MutateContent } from "./temp";
 // import { Tail } from "typescript-tuple/lib/utils";
 // tslint:disable: interface-name
 
@@ -360,22 +360,34 @@ interface a1 {
         a: "a1",
         e: {
             a: "a1",
+            e: {
+                a: "a1",
+                e: {
+                    a: "a1",
+                },
+            },
         },
-        g: "g1";
+        // g: "g1";
     };
-    b: "b1";
-    c: "c1";
+    // b: "b1";
+    // c: "c1";
 }
 
 interface a2 {
     a: {
         a: "a2",
         e: {
-            a: "a2",
-            e: "e",
+            a: "a1",
+            e: {
+                a: "a1",
+                e: {
+                    a: "a2",
+                },
+            },
+            // e: "e",
         },
-        f: "f1",
-        g: "g2";
+        // f: "f1",
+        // g: "g2";
     };
     e: "e2";
 }
@@ -388,4 +400,10 @@ type testtt_0 = PureDualContent<a1, a2>;
 // type testtt_0_2 = ImpureFlankContent<testtt_0, ["ExtractObject"]>;
 // declare const testtt24: PropsMixture<testtt_0, { MixtureKind: "Intersection", MutualPropsMixtureOptions: { ContentMutations: undefined, MixtureKind: "Intersection" | "FlankUnion", Recursive: true } }>;
 declare const testtt24: PropsMixture<testtt_0, { MixtureKind: "Intersection" | "FlankUnion", MutualPropsMixtureOptions: { Recursive: true } }>;
-testtt24.
+testtt24.a.e.e.e.
+
+type test35 = [never] extends { length: number } ? true : false;
+type test35_0 = a1 extends (infer T)[] ? T : never;
+declare const test35_1: ImpureFlankContent<PureDualContent<"a1", "a2">, "ExtractArray">;
+// test35_1.
+// test35_1.LeftContent
